@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#435586</color>
+    <!--<color name="colorPrimary">#435586</color>-->
+    <!--<color name="colorPrimaryDark">#344472</color>-->
+    <color name="colorPrimary">#647886</color>
+    <color name="colorPrimaryDark">#48555f</color>
+    <color name="colorAccent">#647886</color>
+    <color name="colorText">#404040</color>
+    <color name="colorIcons">#FFFFFF</color>
+    <color name="colorError">#FFDD2C00</color>
+    <color name="colorGreyIcons">#DDDDDD</color>
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorGraphBackground">#FFFFFF</color>
+    <color name="colorItemCardBackground">#FFFFFF</color>
+    <color name="colorItemTitleCardBackground">#eceff1</color>
+    <color name="colorMainBackground">#eceff1</color>
+
+
+
+    <item name="colorItem1" type="color">#FF33B5E5</item>
+    <item name="colorItem2" type="color">#FFFF4444</item>
+    <item name="colorItem3" type="color">#FF99CC00</item>
+    <item name="colorItem4" type="color">#FFFFBB33</item>
+    <item name="colorItem5" type="color">#FFAA66CC</item>
+    <item name="colorItem6" type="color">#a1887f</item>
+    <item name="colorItem7" type="color">#7986cb</item>
+    <item name="colorItem8" type="color">#FFCC0000</item>
+    <item name="colorItem9" type="color">#FF669900</item>
+    <item name="colorItem10" type="color">#fff176</item>
+    <item name="colorItem11" type="color">#ad1457</item>
+    <item name="colorItem12" type="color">#4db6ac</item>
+    <item name="colorItem13" type="color">#616161</item>
+    <item name="colorItem14" type="color">#f06292</item>
+    <item name="colorItem15" type="color">#9e9d24</item>
+    <item name="colorItem16" type="color">#90caf9</item>
+    <item name="colorItem17" type="color">#ef6c00</item>
+    <item name="colorItem18" type="color">#4527a0</item>
+    <item name="colorItem19" type="color">#b0bec5</item>
+    <item name="colorItem20" type="color">#ffab91</item>
+
+    <integer-array name="itemsСolors">
+        <item>@color/colorItem1</item>
+        <item>@color/colorItem2</item>
+        <item>@color/colorItem3</item>
+        <item>@color/colorItem4</item>
+        <item>@color/colorItem5</item>
+        <item>@color/colorItem6</item>
+        <item>@color/colorItem7</item>
+        <item>@color/colorItem8</item>
+        <item>@color/colorItem9</item>
+        <item>@color/colorItem10</item>
+        <item>@color/colorItem11</item>
+        <item>@color/colorItem12</item>
+        <item>@color/colorItem13</item>
+        <item>@color/colorItem14</item>
+        <item>@color/colorItem15</item>
+        <item>@color/colorItem16</item>
+        <item>@color/colorItem17</item>
+        <item>@color/colorItem18</item>
+        <item>@color/colorItem19</item>
+        <item>@color/colorItem20</item>
+    </integer-array>
+
+</resources>

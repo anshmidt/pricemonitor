@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp">
+
+
+    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/item_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/item_icon_imageview"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            card_view:layout_constraintStart_toStartOf="parent"
+            card_view:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/item_title_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:text="Huawei 20 X"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorText"
+            card_view:layout_constraintStart_toEndOf="@+id/item_icon_imageview"
+            card_view:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/store_title_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="yandex market placeholder"
+            android:textSize="18sp"
+            android:textColor="@color/colorText"
+            card_view:layout_constraintStart_toEndOf="@+id/item_icon_imageview"
+            card_view:layout_constraintTop_toBottomOf="@+id/item_title_textview" />
+
+        <ImageButton
+            android:id="@+id/item_more_imagebutton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:selectableItemBackground"
+            android:src="@drawable/ic_more"
+            card_view:layout_constraintBottom_toBottomOf="@+id/item_title_textview"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintTop_toTopOf="@+id/item_title_textview" />
+
+        <TextView
+            android:id="@+id/current_price_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:text="@string/current_price_label"
+            android:textSize="12sp"
+            android:textColor="@color/colorText"
+            card_view:layout_constraintBottom_toTopOf="@+id/current_price_textview"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintHorizontal_bias="0.0"
+            card_view:layout_constraintStart_toEndOf="@+id/barrier" />
+
+        <TextView
+            android:id="@+id/current_price_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:gravity="center_vertical"
+            android:text="12"
+            android:textSize="32sp"
+            android:textColor="@color/colorText"
+            card_view:layout_constraintBottom_toTopOf="@+id/last_request_time_textview"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintHorizontal_bias="0.0"
+            card_view:layout_constraintStart_toEndOf="@+id/barrier" />
+
+        <TextView
+            android:id="@+id/last_request_time_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:text="27/01/2019\n14:52:45"
+            android:textSize="12sp"
+            android:textColor="@color/colorText"
+            card_view:layout_constraintBottom_toBottomOf="@+id/graph"
+            card_view:layout_constraintEnd_toEndOf="parent"
+            card_view:layout_constraintHorizontal_bias="0.0"
+            card_view:layout_constraintStart_toEndOf="@+id/barrier" />
+
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/graph"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_margin="0dp"
+            card_view:layout_constraintEnd_toEndOf="@+id/barrier"
+            card_view:layout_constraintStart_toStartOf="parent"
+            card_view:layout_constraintTop_toBottomOf="@+id/store_title_textview" />
+
+        <android.support.constraint.Barrier
+            android:id="@+id/barrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            card_view:barrierDirection="left"
+            card_view:constraint_referenced_ids="current_value_textview,last_request_time_textview,current_price_label"
+            tools:layout_editor_absoluteX="401dp" />
+
+
+    </android.support.constraint.ConstraintLayout>
+
+
+</android.support.v7.widget.CardView>
+
+
+
+
