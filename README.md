@@ -13,7 +13,7 @@ Android app for monitoring prices in online stores.
 #### Key features:
 - Prices of the item are scrapped from websites selected by user.
 - PriceMonitor sends price requests periodically using WorkManager API.
-- Data from previous requests is stored in database.
+- Data from previous requests is stored in a database.
 - Price trends from different stores are displayed on the graph ([GraphView by jjoe64](https://github.com/jjoe64/GraphView)).
-- To add a new item, user enters its name and URL. URL is validated, and if it belongs to known online store, the price is retrieving automatically.
+- To add a new item, user enters its name and URL. URL is validated, and if it belongs to known online store, the price is retrieved automatically.
 - If background service finds out that price has dropped significantly (for example, more than 5%), it shows a notification about dropped price.
