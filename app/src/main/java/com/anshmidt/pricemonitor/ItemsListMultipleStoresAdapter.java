@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,8 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
 import com.anshmidt.pricemonitor.data.Product;
 import com.anshmidt.pricemonitor.data.ProductInStore;
 import com.anshmidt.pricemonitor.dialogs.ProductSettingsBottomSheetFragment;
@@ -26,16 +25,16 @@ import java.util.TreeMap;
 
 public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsListMultipleStoresAdapter.ViewHolder> implements PriceInStoreListAdapter.PricesListListener {
 
-    Context context;
-    ArrayList<Product> products;
-    DataManager dataManager;
-    GraphPlotter graphPlotter;
+    private Context context;
+    public ArrayList<Product> products;
+    private DataManager dataManager;
+    private GraphPlotter graphPlotter;
 
-    public ItemsListMultipleStoresAdapter(Context context, ArrayList<Product> products) {
+    public ItemsListMultipleStoresAdapter(Context context, ArrayList<Product> products, DataManager dataManager, GraphPlotter graphPlotter) {
         this.context = context;
         this.products = products;
-        this.dataManager = new DataManager();
-        this.graphPlotter = new GraphPlotter(context);
+        this.dataManager = dataManager;
+        this.graphPlotter = graphPlotter;
     }
 
     @NonNull
@@ -59,8 +58,6 @@ public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsLi
         });
 
         viewHolder.priceInStoreListRecyclerView.setLayoutManager(new LinearLayoutManager(context));
-
-//        viewHolder.priceInStoreListRecyclerView.addItemDecoration(new DividerItemDecoration(viewHolder.priceInStoreListRecyclerView.getContext(), DividerItemDecoration.VERTICAL));
 
         ArrayList<CurrentPriceInStore> currentPriceInStoreList = dataManager.retrieveLastPricesOfProduct(product);
         PriceInStoreListAdapter priceInStoreListAdapter = new PriceInStoreListAdapter(currentPriceInStoreList, context);

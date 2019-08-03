@@ -9,28 +9,6 @@ public class StoreScraperFactory {
         this.context = context;
     }
 
-//    public StoreScraper getStoreScraper(String title) {
-//        if (title == null) {
-//            return null;
-//        }
-//        if (title.equals(TKitScraper.TITLE)) {
-//            return new TKitScraper(context);
-//        }
-//        if (title.equals(YandexMarketMinScraper.TITLE)) {
-//            return new YandexMarketMinScraper(context);
-//        }
-//        if (title.equals(Digital812Scraper.TITLE)) {
-//            return new Digital812Scraper(context);
-//        }
-//        if (title.equals(EcoDriftScraper.TITLE)) {
-//            return new EcoDriftScraper(context);
-//        }
-//        if (title.equals(DebugRandomScraper.TITLE)) {
-//            return new DebugRandomScraper(context);
-//        }
-//        throw new RuntimeException("Invalid store title: " + title);
-//    }
-
     public StoreScraper getStoreScraper(String storeUrl) {
         if (storeUrl == null) {
             return null;

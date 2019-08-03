@@ -1,7 +1,9 @@
 package com.anshmidt.pricemonitor;
 
+import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
 import com.anshmidt.pricemonitor.data.Product;
 import com.anshmidt.pricemonitor.data.ProductInStore;
+import com.anshmidt.pricemonitor.data.Store;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -143,6 +145,12 @@ public class DataManager {
             }
         }
         return minDate;
+    }
+
+    public int getStoreColor(int storeId, int[] storesColors) {
+        int colorsCount = storesColors.length;
+        int colorId = storeId % colorsCount;
+        return storesColors[colorId];
     }
 
 

@@ -1,7 +1,5 @@
 package com.anshmidt.pricemonitor.data;
 
-import com.anshmidt.pricemonitor.Store;
-
 import java.util.Date;
 import java.util.TreeMap;
 

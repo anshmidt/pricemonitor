@@ -70,10 +70,9 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
 
+        android:layout_marginTop="17dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="13dp"
         android:background="@drawable/ic_clear"
-        app:layout_constraintBottom_toBottomOf="@+id/url_additemdialog_layout"
         app:layout_constraintEnd_toEndOf="@+id/url_additemdialog_layout"
         app:layout_constraintTop_toTopOf="@+id/url_additemdialog_layout" />
 

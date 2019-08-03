@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.anshmidt.pricemonitor.data.Product;
 import com.anshmidt.pricemonitor.data.ProductInStore;
+import com.anshmidt.pricemonitor.data.Store;
 import com.anshmidt.pricemonitor.scrapers.BoltynScraper;
 import com.anshmidt.pricemonitor.scrapers.DebugRandomScraper;
 import com.anshmidt.pricemonitor.scrapers.Digital812Scraper;
@@ -23,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -50,26 +54,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private SQLiteDatabase db;
 
     private final String LOG_TAG = DatabaseHelper.class.getSimpleName();
-    private static DatabaseHelper databaseHelperInstance;
     private Context context;
     private DataManager dataManager;
 
-
-
-    private DatabaseHelper(Context context) {
+    @Inject
+    public DatabaseHelper(Context context, DataManager dataManager) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.context = context;
         this.db = this.getWritableDatabase();  //so db is opened only once
-        this.dataManager = new DataManager();
+        this.dataManager = dataManager;
     }
 
-    public static synchronized DatabaseHelper getInstance(Context context){
-        if (databaseHelperInstance == null) {
-            databaseHelperInstance = new DatabaseHelper(context.getApplicationContext());
-        }
-        return databaseHelperInstance;
-
-    }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -98,7 +93,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_ITEMS_TABLE);
         db.execSQL(CREATE_STORES_TABLE);
 
-        addAllStoresAndItemsIfNeeded();
+        addAllStores();
     }
 
     @Override
@@ -106,21 +101,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public void addAllStoresAndItemsIfNeeded() {
-
+    private void addAllStores() {
         addStoreIfNotExists(YandexMarketMinScraper.TITLE, YandexMarketMinScraper.URL);
         addStoreIfNotExists(TKitScraper.TITLE, TKitScraper.URL);
         addStoreIfNotExists(Digital812Scraper.TITLE, Digital812Scraper.URL);
         addStoreIfNotExists(EcoDriftScraper.TITLE, EcoDriftScraper.URL);
         addStoreIfNotExists(DebugRandomScraper.TITLE, DebugRandomScraper.URL);
         addStoreIfNotExists(BoltynScraper.TITLE, BoltynScraper.URL);
+    }
 
+    // for debug purposes
+    private void addAllItems() {
         addItemIfNotExists("Huawei Mate 20X","https://market.yandex.ru/product--smartfon-huawei-mate-20x-128gb/385696006");
         addItemIfNotExists("Huawei Mate 20X", "https://t-kit.ru/collection/huawei-mate-20-x/product/huawei-mate-20-x-6128gb-midnight-blue-2");
         addItemIfNotExists("Huawei Mate 20X","http://digital812.su/huawei-mate-20-x-128gb-blue-polunochnyj-sinij-eu");
         addItemIfNotExists("KingSong KS16S","https://ecodrift.ru/product/monokoleso-kingsong-ks16s-840wh-rubber-black/");
         addItemIfNotExists("Test item 1", "https://stackoverflow.com/questions/50761374/how-does-workmanager-schedule-get-requests-to-rest-api");
     }
+
+
 
     public void clearPricesAndItems() {
 //        db.execSQL("DROP TABLE IF EXISTS " + PRICES_TABLE_NAME);
@@ -145,7 +144,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(KEY_ITEM_ID, itemId);
         values.put(KEY_PRICE, price);
         values.put(KEY_TIMESTAMP, timestamp);
+        Log.d(LOG_TAG, "Adding price to database: itemId = "+itemId+", price = "+price);
         db.insert(PRICES_TABLE_NAME, null, values);
+    }
+
+    public void addPriceWithCurrentTimestamp(int itemId, int price) {
+        long currentTimestamp = System.currentTimeMillis();
+        addPrice(itemId, price, currentTimestamp);
     }
 
     public int addItemIfNotExists(String itemTitle, String itemUrl) {  //returns itemId
@@ -435,13 +440,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
 
-//        Long currentTimestamp = System.currentTimeMillis();
-//        allData.put(currentTimestamp - 5*24*3600*1000, 41000);
-//        allData.put(currentTimestamp - 4*24*3600*1000, 40000);
-//        allData.put(currentTimestamp - 3*24*3600*1000, 53000);
-//        allData.put(currentTimestamp - 2*24*3600*1000, 50000);
-//        allData.put(currentTimestamp - 24*3600*1000, 45000);
-//        allData.put(currentTimestamp, 50000);
         return allData;
     }
 
@@ -492,7 +490,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(LOG_TAG, "All prices for item " + itemId + " deleted");
     }
 
-    public ArrayList<Product> getAllProducts() {
+    public ArrayList<Product> getAllProducts(int[] storeColors) {
 
         ArrayList<Product> allProducts = new ArrayList<>();
         ArrayList<Integer> allItemIds = getAllItemsIdList();
@@ -502,7 +500,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             String storeName = getStoreTitle(itemId);
             String storeUrl = getStoreUrl(itemId);
             int storeId = getStoreIdByTitle(storeName);
-            int storeColor = getStoreColor(storeId);
+            int storeColor = dataManager.getStoreColor(storeId, storeColors);
             TreeMap<Date, Integer> pricesForItem = getAllPricesWithDate(itemId);
 
             Store store = new Store(storeUrl, storeName, storeId, storeColor);
@@ -524,10 +522,5 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
-    public int getStoreColor(int storeId) {
-        int[] allStoreColors = context.getResources().getIntArray(R.array.itemsСolors);
-        int colorsCount = allStoreColors.length;
-        int colorId = storeId % colorsCount;
-        return allStoreColors[colorId];
-    }
+
 }

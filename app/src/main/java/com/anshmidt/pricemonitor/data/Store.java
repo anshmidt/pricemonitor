@@ -1,4 +1,4 @@
-package com.anshmidt.pricemonitor;
+package com.anshmidt.pricemonitor.data;
 
 import android.content.Context;
 

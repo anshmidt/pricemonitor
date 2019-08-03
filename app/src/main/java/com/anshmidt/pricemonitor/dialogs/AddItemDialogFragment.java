@@ -3,6 +3,7 @@ package com.anshmidt.pricemonitor.dialogs;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,11 +22,14 @@ import android.widget.TextView;
 
 import com.android.volley.VolleyError;
 import com.anshmidt.pricemonitor.DatabaseHelper;
+import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 import com.anshmidt.pricemonitor.scrapers.StoreScraperFactory;
 
 import java.util.ArrayList;
+
+import javax.inject.Inject;
 
 public class AddItemDialogFragment extends DialogFragment implements StoreScraper.StoreScraperListener {
 
@@ -40,7 +44,9 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
     EditText urlEditText;
     TextInputLayout urlInputLayout;
     TextInputLayout itemNameInputLayout;
-    DatabaseHelper databaseHelper;
+
+    @Inject DatabaseHelper databaseHelper;
+
     boolean urlValidated = false;
     boolean itemNameValidated = false;
     String enteredUrl;
@@ -53,6 +59,12 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
     TextView requestStatusTextView;
     ImageButton clearUrlButton;
     private final String STATUS_URL_VALIDATED_LOCALLY = "UrlValidatedLocally";
+
+    @Override
+    public void onAttach(Context context) {
+        PriceMonitorApplication.getComponent().inject(this);
+        super.onAttach(context);
+    }
 
     @NonNull
     @Override
@@ -79,8 +91,6 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
             itemName = productName;
         }
 
-
-        databaseHelper = DatabaseHelper.getInstance(getContext());
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(subView);
@@ -298,6 +308,7 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
 
 
     private String getKnownStoreForUrl(String url) {
+        
         ArrayList<String> knownStoreUrls = databaseHelper.getAllStoreUrls();
         for (String knownStoreUrl : knownStoreUrls) {
             if (url.contains(knownStoreUrl)) {

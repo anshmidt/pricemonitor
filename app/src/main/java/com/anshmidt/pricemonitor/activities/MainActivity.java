@@ -1,4 +1,4 @@
-package com.anshmidt.pricemonitor;
+package com.anshmidt.pricemonitor.activities;
 
 import android.app.FragmentManager;
 import android.app.NotificationChannel;
@@ -21,16 +21,27 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.anshmidt.pricemonitor.DataManager;
+import com.anshmidt.pricemonitor.DatabaseHelper;
+import com.anshmidt.pricemonitor.GraphPlotter;
+import com.anshmidt.pricemonitor.ItemsListMultipleStoresAdapter;
+import com.anshmidt.pricemonitor.NotificationHelper;
+import com.anshmidt.pricemonitor.PriceMonitorApplication;
+import com.anshmidt.pricemonitor.R;
+import com.anshmidt.pricemonitor.ServerRequestsWorker;
 import com.anshmidt.pricemonitor.dialogs.AddItemDialogFragment;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
-import com.anshmidt.pricemonitor.scrapers.StoreScraperFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
@@ -40,47 +51,34 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
 
 
     Toolbar toolbar;
-    DatabaseHelper databaseHelper;
-    DataManager dataManager;
-//    ItemsListAdapter itemsListAdapter;
-    ItemsListMultipleStoresAdapter itemsListMultipleStoresAdapter;
-    GraphPlotter graphPlotter;
-    FloatingActionButton addItemButton;
-    StoreScraperFactory storeScraperFactory;
-    final String LOG_TAG = MainActivity.class.getSimpleName();
-    final int INTERVAL_BETWEEN_SERVER_REQUESTS = 60;
 
+    @Inject DatabaseHelper databaseHelper;
+
+    @Inject DataManager dataManager;
+    ItemsListMultipleStoresAdapter itemsListMultipleStoresAdapter;
+    @Inject GraphPlotter graphPlotter;
+    FloatingActionButton addItemButton;
+    final String LOG_TAG = MainActivity.class.getSimpleName();
+    final int INTERVAL_BETWEEN_SERVER_REQUESTS = 30;
+    @Inject int[] storesColors;
+    @Inject NotificationHelper notificationHelper;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        databaseHelper = DatabaseHelper.getInstance(MainActivity.this);
-        dataManager = new DataManager();
-        graphPlotter = new GraphPlotter(MainActivity.this);
 
-
-        storeScraperFactory = new StoreScraperFactory(MainActivity.this);
+        PriceMonitorApplication.getComponent().inject(this);
 
         //temp
-        databaseHelper.addAllStoresAndItemsIfNeeded();
         databaseHelper.printDbToLog();
 
-
-
-        ArrayList<Integer> itemsIdList = databaseHelper.getAllItemsIdList();
-
-
-        // set up the RecyclerView
         RecyclerView recyclerView = findViewById(R.id.items_recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        itemsListAdapter = new ItemsListAdapter(this, itemsIdList, true);
-//        recyclerView.setAdapter(itemsListAdapter);
 
-        itemsListMultipleStoresAdapter = new ItemsListMultipleStoresAdapter(MainActivity.this, databaseHelper.getAllProducts());
+        itemsListMultipleStoresAdapter = new ItemsListMultipleStoresAdapter(MainActivity.this, databaseHelper.getAllProducts(storesColors), dataManager, graphPlotter);
         recyclerView.setAdapter(itemsListMultipleStoresAdapter);
-
 
         sendPeriodicServerRequests();
 
@@ -113,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
     @Override
     protected void onResume() {
         super.onResume();
+        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
         itemsListMultipleStoresAdapter.notifyDataSetChanged();
     }
 
@@ -161,13 +160,12 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
         int itemId = databaseHelper.addItemIfNotExists(itemName, itemUrl);
         long timestamp = System.currentTimeMillis();
         databaseHelper.addPrice(itemId, price, timestamp);
-//        itemsListMultipleStoresAdapter.itemsIdList = databaseHelper.getAllItemsIdList();
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts();
+        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
         itemsListMultipleStoresAdapter.notifyDataSetChanged();
     }
 
     public void onItemDeleted(int itemId) {
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts();
+        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
         itemsListMultipleStoresAdapter.notifyDataSetChanged();
     }
 
@@ -177,11 +175,15 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
             Data inputData = new Data.Builder()
                     .putInt(ServerRequestsWorker.KEY_ITEM_ID, itemId)
                     .build();
+            Constraints periodicWorkerConstraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
             PeriodicWorkRequest serverScraperWorkRequest =
                     new PeriodicWorkRequest.Builder(
                             ServerRequestsWorker.class,
                             INTERVAL_BETWEEN_SERVER_REQUESTS, TimeUnit.MINUTES)
                             .setInputData(inputData)
+                            .setConstraints(periodicWorkerConstraints)
                             .build();
 
             String uniqueWorkTag = String.valueOf(itemId);
@@ -200,12 +202,7 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
                             for (WorkInfo workInfo : workInfos) {
                                 //receiving back the data
                                 Log.d(LOG_TAG, "result of PeriodicWorkRequest received for itemID="+itemId + ". Status: " + workInfo.getState());
-                                if (workInfo != null) {
-
-                                    if (workInfo.getState() == WorkInfo.State.ENQUEUED) {
-                                        itemsListMultipleStoresAdapter.notifyDataSetChanged();
-                                    }
-                                }
+                                //products list doesn't get updated on each result. It is updated only onResume
                             }
                         }
                     });
@@ -241,47 +238,6 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
         }
     }
 
-    public void showNotification(String body) {
-        String standardTitle = getString(R.string.app_name);
-        showNotification(standardTitle, body);
-    }
-
-
-    public void showNotification(String title, String body) {
-
-        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        int notificationId = 1;
-        String channelId = "channel-01";
-        String channelName = getString(R.string.app_name) + "Channel";
-        int importance = NotificationManager.IMPORTANCE_HIGH;
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationChannel mChannel = new NotificationChannel(
-                    channelId, channelName, importance);
-            notificationManager.createNotificationChannel(mChannel);
-        }
-
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.ic_money)
-                .setContentTitle(title)
-                .setContentText(body)
-                .setAutoCancel(true);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        stackBuilder.addNextIntent(intent);
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
-                0,
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        notificationBuilder.setContentIntent(resultPendingIntent);
-
-        notificationManager.notify(notificationId, notificationBuilder.build());
-    }
-
-
     public void onOneTimeResponseFromServer(int priceFromServer, String itemUrl) {
         if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
             return;
@@ -289,29 +245,11 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
 
         int itemId = databaseHelper.getItemId(itemUrl);
 
-        int previousPriceFromDb = databaseHelper.getLastPrice(itemId);
-        if (hasPriceDroppedEnoughToShowNotification(priceFromServer, previousPriceFromDb)) {
-            String itemTitle = databaseHelper.getItemTitle(itemId);
-            String storeTitle = databaseHelper.getStoreTitle(itemId);
-            String notificationTitle = itemTitle + " (" + storeTitle + ")";
-            String notificationText = getString(R.string.price_dropped_notification_text, priceFromServer, previousPriceFromDb);
-            showNotification(notificationTitle, notificationText);
-        }
+        notificationHelper.showPriceDroppedNotificationIfNeeded(itemId, priceFromServer, databaseHelper);
+        databaseHelper.addPriceWithCurrentTimestamp(itemId, priceFromServer);
 
-        long currentTimestamp = System.currentTimeMillis();
-        databaseHelper.addPrice(itemId, priceFromServer, currentTimestamp);
-
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts();
+        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
         itemsListMultipleStoresAdapter.notifyDataSetChanged();
-    }
-
-    public boolean hasPriceDroppedEnoughToShowNotification(int currentPrice, int previousPrice) {
-        final double PRICE_DROPPING_ENOUGH_TO_SEND_NOTIFICATION_COEFF = 0.001;
-        if ( (previousPrice - currentPrice) / currentPrice > PRICE_DROPPING_ENOUGH_TO_SEND_NOTIFICATION_COEFF) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
 
@@ -320,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
         AddItemDialogFragment addItemDialogFragment = new AddItemDialogFragment();
         addItemDialogFragment.show(manager, addItemDialogFragment.FRAGMENT_TAG);
     }
+
 
 
 }

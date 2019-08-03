@@ -1,22 +1,33 @@
 package com.anshmidt.pricemonitor;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.amulyakhare.textdrawable.TextDrawable;
-import com.jjoe64.graphview.GraphView;
+import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
 
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,12 +62,14 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View view = layoutInflater.inflate(R.layout.price_in_store_entry, viewGroup, false);
+
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         final CurrentPriceInStore currentPriceInStore = priceInStoreList.get(i);
+
 
         viewHolder.priceTextView.setText(String.format(Locale.getDefault(), "%,d", currentPriceInStore.price));
 
@@ -73,14 +86,9 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
             }
         });
 
-//        viewHolder.storeIcon.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                pricesListListener.onStoreIconClicked(currentPriceInStore.storeName);
-//            }
-//        });
 
     }
+
 
     private void displayDate(TextView textView, Date date) {
         String datePattern = "HH:mm:ss dd/MM/yyyy";
@@ -113,6 +121,8 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
         TextView storeNameTextView;
         TextView dateTextView;
         ImageButton gotoUrlImageButton;
+        View itemView;
+
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -122,7 +132,7 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
             dateTextView = itemView.findViewById(R.id.last_request_time_priceinstore_textview);
             gotoUrlImageButton = itemView.findViewById(R.id.goto_url_priceinstore_imagebutton);
 
-//            storeIcon.setOnClickListener(this);
+            this.itemView = itemView;
             itemView.setOnClickListener(this);
         }
 

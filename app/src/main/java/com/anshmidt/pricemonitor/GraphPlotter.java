@@ -1,8 +1,7 @@
 package com.anshmidt.pricemonitor;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.support.constraint.ConstraintLayout;
+import android.util.Log;
 import android.view.ViewGroup;
 
 import com.jjoe64.graphview.GraphView;
@@ -21,26 +20,21 @@ import java.util.concurrent.TimeUnit;
 
 public class GraphPlotter {
 
-    DataManager dataManager = new DataManager();
-    Context context;
-//    GraphView graph;
-    final String DATES_ON_AXIS_FORMAT = "dd/MM";
-    final int PADDING_TO_FIT_VERTICAL_AXIS_LABELS = 74;
-    final int GRAPH_LINE_THICKNESS = 8;
+    private DataManager dataManager;
+    private Context context;
+    private final String DATES_ON_AXIS_FORMAT = "dd/MM";
+    private final int PADDING_TO_FIT_VERTICAL_AXIS_LABELS = 74;
+    private final int GRAPH_LINE_THICKNESS = 8;
 
-    final int HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS = 3;
-    final int VERTICAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE = 100;
-    final int MIN_Y_IF_DATA_NOT_AVAILABLE = 0;
-    final int MAX_Y_IF_DATA_NOT_AVAILABLE = MIN_Y_IF_DATA_NOT_AVAILABLE + VERTICAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE;
-    final int Y_DATA_RANGE_SO_SMALL_THAT_CUSTOM_SCALE_NEEDED = 4;
-    final int VERTICAL_AXIS_RANGE_IF_DATA_RANGE_SMALL = 4;
+    private final int HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS = 3;
 
-    final int POINTS_SIZE = 12;
+    private final int POINTS_SIZE = 12;
 
 
 
-    public GraphPlotter(Context context) {
+    public GraphPlotter(Context context, DataManager dataManager) {
         this.context = context;
+        this.dataManager = dataManager;
     }
 
     public void createGraph(TreeMap<Date, Integer> data, GraphView graph, int graphColor, boolean pointsShown) {
@@ -95,7 +89,7 @@ public class GraphPlotter {
         gridLabelRenderer.setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
 
 //        setXAxisRange(graph, sortedKeys, isDataAvailable);
-        setYAxisRangeNew(graph, data, isDataAvailable);
+        setYAxisRange(graph, data, isDataAvailable);
 
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATES_ON_AXIS_FORMAT);
@@ -109,35 +103,7 @@ public class GraphPlotter {
         graph.getViewport().setScalableY(false); // enables vertical zooming and scrolling
     }
 
-//    private void setXAxisRange(GraphView graph, ArrayList<Date> sortedKeys, boolean isDataAvailable) {
-//        final int HORIZONTAL_AXIS_LABELS_COUNT = 4;
-//        final long MAX_X_IF_DATA_NOT_AVAILABLE = new Date().getTime();
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.add(Calendar.DAY_OF_YEAR, -HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS);
-//        final long MIN_X_IF_DATA_NOT_AVAILABLE = calendar.getTime().getTime();
-//
-//        long minAxisX = MIN_X_IF_DATA_NOT_AVAILABLE;
-//        long maxAxisX = MAX_X_IF_DATA_NOT_AVAILABLE;
-//
-//        long minDataX;
-//        long maxDataX;
-//        if (isDataAvailable) {
-//            minDataX = sortedKeys.get(0).getTime();
-//            maxDataX = sortedKeys.get(sortedKeys.size() - 1).getTime();
-//
-//            if (maxDataX - minDataX < TimeUnit.DAYS.toMillis(HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS)) {
-//                minAxisX = Math.min(minDataX, MIN_X_IF_DATA_NOT_AVAILABLE);
-//                maxAxisX = minAxisX + TimeUnit.DAYS.toMillis(HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS);
-//            } else {
-//                minAxisX = minDataX;
-//                maxAxisX = maxDataX;
-//            }
-//        }
-//        graph.getViewport().setMinX(minAxisX);
-//        graph.getViewport().setMaxX(maxAxisX);
-//        graph.getViewport().setXAxisBoundsManual(true);
-//        graph.getGridLabelRenderer().setNumHorizontalLabels(HORIZONTAL_AXIS_LABELS_COUNT);
-//    }
+
 
     public void setXAxisRange(GraphView graph, Date minDate, Date maxDate, boolean isDataAvailable) {
         final int HORIZONTAL_AXIS_LABELS_COUNT = 4;
@@ -167,36 +133,9 @@ public class GraphPlotter {
         graph.getGridLabelRenderer().setNumHorizontalLabels(HORIZONTAL_AXIS_LABELS_COUNT);
     }
 
+
+
     private void setYAxisRange(GraphView graph, TreeMap<Date, Integer> data, boolean isDataAvailable) {
-        int minDataY;
-        int maxDataY;
-        if (isDataAvailable) {
-            //find minDataY and maxDataY
-            minDataY = dataManager.getMinValue(data);
-            maxDataY = dataManager.getMaxValue(data);
-
-            int averageDataY = (maxDataY + minDataY) / 2;
-            final int MIN_AXIS_RANGE_Y = averageDataY / 100;
-
-            if (maxDataY - minDataY < MIN_AXIS_RANGE_Y) {
-                graph.getViewport().setMinY(minDataY);
-                graph.getViewport().setMaxY(minDataY + MIN_AXIS_RANGE_Y);
-                graph.getViewport().setYAxisBoundsManual(true);
-            } else {
-                int dataRange = maxDataY - minDataY;
-                int minAxisY = minDataY - dataRange / 20;
-                int maxAxisY = maxDataY + dataRange / 20;
-                graph.getViewport().setMinY(minAxisY);
-                graph.getViewport().setMaxY(maxAxisY);
-            }
-        } else {
-            graph.getViewport().setMinY(MIN_Y_IF_DATA_NOT_AVAILABLE);
-            graph.getViewport().setMaxY(MAX_Y_IF_DATA_NOT_AVAILABLE);
-        }
-        graph.getViewport().setYAxisBoundsManual(true);
-    }
-
-    private void setYAxisRangeNew(GraphView graph, TreeMap<Date, Integer> data, boolean isDataAvailable) {
         int currentAxisLabelCount; //set by other series
         currentAxisLabelCount = graph.getGridLabelRenderer().getNumVerticalLabels();
 
@@ -220,6 +159,7 @@ public class GraphPlotter {
             } else {
                 isDataRangeSmall = false;
             }
+
         }
 
 
@@ -228,7 +168,7 @@ public class GraphPlotter {
 
             //make graph height smaller
             ViewGroup.LayoutParams layoutParams = graph.getLayoutParams();
-            layoutParams.height = getPixelsFromDp(SMALL_DATA_RANGE_GRAPH_HEIGHT_DP, context);
+            layoutParams.height = getPixelsFromDp(SMALL_DATA_RANGE_GRAPH_HEIGHT_DP);
             graph.setLayoutParams(layoutParams);
         } else {
             axisLabelsCount = NORMAL_GRAPHS_AXIS_LABELS_COUNT;
@@ -238,7 +178,7 @@ public class GraphPlotter {
         graph.getGridLabelRenderer().setNumVerticalLabels(axisLabelsCount);
     }
 
-    private int getPixelsFromDp(float dp, Context context) {
+    private int getPixelsFromDp(float dp) {
         final float scale = context.getResources().getDisplayMetrics().density;
         int pixels = (int) (dp * scale + 0.5f);
         return pixels;
