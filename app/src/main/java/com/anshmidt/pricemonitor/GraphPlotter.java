@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.view.ViewGroup;
 
+import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
@@ -51,7 +52,11 @@ public class GraphPlotter {
 
         ArrayList<Date> sortedKeys = null;
         if (data != null) {
-            sortedKeys = dataManager.getSortedKeys(data);
+            try {
+                sortedKeys = dataManager.getSortedKeys(data);
+            } catch (EmptyDataException e) {
+                throw new RuntimeException("Data is empty");
+            }
             if (sortedKeys.size() > 0) {
                 isDataAvailable = true;
             }
@@ -148,18 +153,21 @@ public class GraphPlotter {
         int minDataY;
         int maxDataY;
         if (isDataAvailable) {
-            minDataY = dataManager.getMinValue(data);
-            maxDataY = dataManager.getMaxValue(data);
+            try {
+                minDataY = dataManager.getMinValue(data);
+                maxDataY = dataManager.getMaxValue(data);
 
-            int averageDataY = (maxDataY + minDataY) / 2;
-            final int MIN_AXIS_RANGE_Y = averageDataY / 100;
+                int averageDataY = (maxDataY + minDataY) / 2;
+                final int MIN_AXIS_RANGE_Y = averageDataY / 100;
 
-            if (maxDataY - minDataY < MIN_AXIS_RANGE_Y) {
-                isDataRangeSmall = true;
-            } else {
-                isDataRangeSmall = false;
+                if (maxDataY - minDataY < MIN_AXIS_RANGE_Y) {
+                    isDataRangeSmall = true;
+                } else {
+                    isDataRangeSmall = false;
+                }
+            } catch (EmptyDataException e) {
+                throw new RuntimeException("Data is empty");
             }
-
         }
 
 

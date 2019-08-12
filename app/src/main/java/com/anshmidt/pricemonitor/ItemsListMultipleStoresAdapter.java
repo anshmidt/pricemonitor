@@ -17,6 +17,7 @@ import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
 import com.anshmidt.pricemonitor.data.Product;
 import com.anshmidt.pricemonitor.data.ProductInStore;
 import com.anshmidt.pricemonitor.dialogs.ProductSettingsBottomSheetFragment;
+import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
 import com.jjoe64.graphview.GraphView;
 
 import java.util.ArrayList;
@@ -59,11 +60,14 @@ public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsLi
 
         viewHolder.priceInStoreListRecyclerView.setLayoutManager(new LinearLayoutManager(context));
 
-        ArrayList<CurrentPriceInStore> currentPriceInStoreList = dataManager.retrieveLastPricesOfProduct(product);
-        PriceInStoreListAdapter priceInStoreListAdapter = new PriceInStoreListAdapter(currentPriceInStoreList, context);
-        priceInStoreListAdapter.setPricesListListener(this, viewHolder, position);
-        viewHolder.priceInStoreListRecyclerView.setAdapter(priceInStoreListAdapter);
-
+        try {
+            ArrayList<CurrentPriceInStore> currentPriceInStoreList = dataManager.retrieveLastPricesOfProduct(product);
+            PriceInStoreListAdapter priceInStoreListAdapter = new PriceInStoreListAdapter(currentPriceInStoreList, context);
+            priceInStoreListAdapter.setPricesListListener(this, viewHolder, position);
+            viewHolder.priceInStoreListRecyclerView.setAdapter(priceInStoreListAdapter);
+        } catch (EmptyDataException e) {
+            throw new RuntimeException("Cannot retrieve last prices of product: " + product);
+        }
 
         ArrayList<ProductInStore> items = product.productInStoreList;
         graphPlotter.clearGraph(viewHolder.graph);

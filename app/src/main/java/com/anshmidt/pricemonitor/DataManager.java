@@ -4,6 +4,7 @@ import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
 import com.anshmidt.pricemonitor.data.Product;
 import com.anshmidt.pricemonitor.data.ProductInStore;
 import com.anshmidt.pricemonitor.data.Store;
+import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,56 +23,38 @@ public class DataManager {
         return keysList;
     }
 
-    public int getLastValue(TreeMap<Date, Integer> data) {
-        if ((data != null) && (!data.isEmpty())) {
-            Date lastKey = getSortedKeys(data).get(data.size() - 1);
-            return data.get(lastKey);
-        } else {
-            throw new IndexOutOfBoundsException();
+    private void checkDataNotEmpty(TreeMap<Date, Integer> data) throws EmptyDataException {
+        if ((data == null) || (data.isEmpty())) {
+            throw new EmptyDataException();
         }
     }
 
-    public int getMaxValue(TreeMap<Date, Integer> data) {
+    public int getLastValue(TreeMap<Date, Integer> data) throws EmptyDataException {
+        checkDataNotEmpty(data);
+        Date lastKey = getSortedKeys(data).get(data.size() - 1);
+        return data.get(lastKey);
+    }
+
+    public int getMaxValue(TreeMap<Date, Integer> data) throws EmptyDataException {
+        checkDataNotEmpty(data);
         ArrayList<Integer> values = new ArrayList<>(data.values());
-        if ((data != null) && (!data.isEmpty())) {
-            int maxValue = values.get(0);
-            for (int value : values) {
-                if (value > maxValue) {
-                    maxValue = value;
-                }
-            }
-            return maxValue;
-        } else {
-            throw new RuntimeException("Data is empty or null");
-        }
+        return Collections.max(values);
     }
 
-    public int getMinValue(TreeMap<Date, Integer> data) {
+    public int getMinValue(TreeMap<Date, Integer> data) throws EmptyDataException {
+        checkDataNotEmpty(data);
         ArrayList<Integer> values = new ArrayList<>(data.values());
-        if ((data != null) && (!data.isEmpty())) {
-            int minValue = values.get(0);
-            for (int value : values) {
-                if (value < minValue) {
-                    minValue = value;
-                }
-            }
-            return minValue;
-        } else {
-            throw new RuntimeException("Data is empty or null");
-        }
+        return Collections.min(values);
+
     }
 
-
-
-    public Date getLastKey(TreeMap<Date, Integer> data) {
-        if ((data != null) && (!data.isEmpty())) {
-            return getSortedKeys(data).get(data.size() - 1);
-        } else {
-            throw new IndexOutOfBoundsException();
-        }
+    public Date getLastKey(TreeMap<Date, Integer> data) throws EmptyDataException {
+        checkDataNotEmpty(data);
+        return getSortedKeys(data).get(data.size() - 1);
     }
 
-    public ArrayList<Date> getSortedKeys(TreeMap<Date, Integer> data) {
+    public ArrayList<Date> getSortedKeys(TreeMap<Date, Integer> data) throws EmptyDataException {
+        checkDataNotEmpty(data);
         return getKeys(data);
     }
 
@@ -80,7 +63,7 @@ public class DataManager {
         return data;
     }
 
-    public ArrayList<CurrentPriceInStore> retrieveLastPricesOfProduct(Product product) {
+    public ArrayList<CurrentPriceInStore> retrieveLastPricesOfProduct(Product product) throws EmptyDataException {
         ArrayList<ProductInStore> items = product.productInStoreList;
         ArrayList<CurrentPriceInStore> currentPricesInStore = new ArrayList<>();
         for (ProductInStore productInStore : items) {
@@ -88,6 +71,8 @@ public class DataManager {
             String itemUrl = productInStore.url;
             Store store = productInStore.store;
             TreeMap<Date, Integer> itemPrices = productInStore.prices;
+
+            checkDataNotEmpty(itemPrices);
 
             Date lastDate = getLastKey(itemPrices);
             int lastPrice = getLastValue(itemPrices);
