@@ -48,30 +48,34 @@ public class ServerRequestsWorker extends Worker {
     @Override
     public Result doWork() {
 
-        final int DEFAULT_ITEM_ID = -1;
-        int itemId = getInputData().getInt(KEY_ITEM_ID, DEFAULT_ITEM_ID);
-        String storeUrl = databaseHelper.getStoreUrl(itemId);
-
-
-        Log.d(LOG_TAG, "Sending request for itemId: " + itemId + " ("+databaseHelper.getItemTitle(itemId)+" from store "+storeUrl+")");
-
-        StoreScraper storeScraper = storeScraperFactory.getStoreScraper(storeUrl);
-
-        String itemUrl = databaseHelper.getItemUrl(itemId);
-        int itemPrice = storeScraper.sendSynchronousRequest(itemUrl);
-
-        Log.d(LOG_TAG, "Received response for itemId " + itemId + ": price == " + itemPrice);
-
+        Log.d(LOG_TAG, "worker works");
         Data outputData = new Data.Builder()
-                .putInt(KEY_PRICE, itemPrice)
-                .putString(KEY_ITEM_URL, itemUrl)
+                .putString("asdf", "asdf")
                 .build();
-
-
-        if (itemPrice != StoreScraper.PRICE_NOT_FOUND) {
-            notificationHelper.showPriceDroppedNotificationIfNeeded(itemId, itemPrice, databaseHelper);
-            databaseHelper.addPriceWithCurrentTimestamp(itemId, itemPrice);
-        }
+//        final int DEFAULT_ITEM_ID = -1;
+//        int itemId = getInputData().getInt(KEY_ITEM_ID, DEFAULT_ITEM_ID);
+//        String storeUrl = databaseHelper.getStoreUrl(itemId);
+//
+//
+//        Log.d(LOG_TAG, "Sending request for itemId: " + itemId + " ("+databaseHelper.getItemTitle(itemId)+" from store "+storeUrl+")");
+//
+//        StoreScraper storeScraper = storeScraperFactory.getStoreScraper(storeUrl);
+//
+//        String itemUrl = databaseHelper.getItemUrl(itemId);
+//        int itemPrice = storeScraper.sendSynchronousRequest(itemUrl);
+//
+//        Log.d(LOG_TAG, "Received response for itemId " + itemId + ": price == " + itemPrice);
+//
+//        Data outputData = new Data.Builder()
+//                .putInt(KEY_PRICE, itemPrice)
+//                .putString(KEY_ITEM_URL, itemUrl)
+//                .build();
+//
+//
+//        if (itemPrice != StoreScraper.PRICE_NOT_FOUND) {
+//            notificationHelper.showPriceDroppedNotificationIfNeeded(itemId, itemPrice, databaseHelper);
+//            databaseHelper.addPriceWithCurrentTimestamp(itemId, itemPrice);
+//        }
 
         return Result.success(outputData);
     }

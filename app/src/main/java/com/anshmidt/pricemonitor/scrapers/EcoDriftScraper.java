@@ -11,10 +11,10 @@ public class EcoDriftScraper extends StoreScraper {
 
 
     public static final String URL = "ecodrift.ru";
-    public static final String TITLE = "ecodrift";
+    public static final String NAME = "ecodrift";
 
     public EcoDriftScraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

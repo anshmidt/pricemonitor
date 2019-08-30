@@ -1,10 +1,10 @@
 package com.anshmidt.pricemonitor;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.ViewGroup;
 
-import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
+import com.anshmidt.pricemonitor.data.DataManager;
+import com.anshmidt.pricemonitor.room.entity.Price;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
@@ -13,13 +13,17 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.TreeMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class GraphPlotter {
+
+    /**
+     * X axis - Date,
+     * Y axis - Price
+     */
 
     private DataManager dataManager;
     private Context context;
@@ -38,36 +42,30 @@ public class GraphPlotter {
         this.dataManager = dataManager;
     }
 
-    public void createGraph(TreeMap<Date, Integer> data, GraphView graph, int graphColor, boolean pointsShown) {
+    public void createGraph(List<Price> prices, GraphView graph, int graphColor, boolean pointsShown) {
         clearGraph(graph);
-        addSeriesToGraph(data, graph, graphColor, pointsShown);
+        addSeriesToGraph(prices, graph, graphColor, pointsShown);
     }
 
     public void clearGraph(GraphView graph) {
         graph.removeAllSeries(); //clear existing data from graph
     }
 
-    public void addSeriesToGraph(TreeMap<Date, Integer> data, GraphView graph, int graphColor, boolean pointsShown) {
+    public void addSeriesToGraph(List<Price> prices, GraphView graph, int graphColor, boolean pointsShown) {
         boolean isDataAvailable = false;
 
-        ArrayList<Date> sortedKeys = null;
-        if (data != null) {
-            try {
-                sortedKeys = dataManager.getSortedKeys(data);
-            } catch (EmptyDataException e) {
-                throw new RuntimeException("Data is empty");
-            }
-            if (sortedKeys.size() > 0) {
-                isDataAvailable = true;
-            }
+        List<Date> sortedDates = dataManager.getSortedDates(prices);
+        if (sortedDates.size() > 0) {
+            isDataAvailable = true;
         }
 
         if (isDataAvailable) {
-            DataPoint[] dataPoints = new DataPoint[data.size()];
+            DataPoint[] dataPoints = new DataPoint[prices.size()];
 
             int i = 0;
-            for (Date date : sortedKeys) {
-                Integer value = data.get(date);
+            for (Price price : prices) {
+                Integer value = price.price;
+                Date date = price.date;
                 dataPoints[i] = new DataPoint(date, value);
                 i++;
             }
@@ -94,7 +92,7 @@ public class GraphPlotter {
         gridLabelRenderer.setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
 
 //        setXAxisRange(graph, sortedKeys, isDataAvailable);
-        setYAxisRange(graph, data, isDataAvailable);
+        setYAxisRange(graph, prices, isDataAvailable);
 
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATES_ON_AXIS_FORMAT);
@@ -140,7 +138,7 @@ public class GraphPlotter {
 
 
 
-    private void setYAxisRange(GraphView graph, TreeMap<Date, Integer> data, boolean isDataAvailable) {
+    private void setYAxisRange(GraphView graph, List<Price> prices, boolean isDataAvailable) {
         int currentAxisLabelCount; //set by other series
         currentAxisLabelCount = graph.getGridLabelRenderer().getNumVerticalLabels();
 
@@ -150,23 +148,19 @@ public class GraphPlotter {
         final int SMALL_DATA_RANGE_GRAPH_HEIGHT_DP = 100;
         boolean isDataRangeSmall = true;
 
-        int minDataY;
-        int maxDataY;
+        int minPrice;
+        int maxPrice;
         if (isDataAvailable) {
-            try {
-                minDataY = dataManager.getMinValue(data);
-                maxDataY = dataManager.getMaxValue(data);
+            minPrice = dataManager.getMinPrice(prices).price;
+            maxPrice = dataManager.getMaxPrice(prices).price;
 
-                int averageDataY = (maxDataY + minDataY) / 2;
-                final int MIN_AXIS_RANGE_Y = averageDataY / 100;
+            int averagePrice = (maxPrice + minPrice) / 2;
+            final int MIN_AXIS_RANGE_Y = averagePrice / 100;
 
-                if (maxDataY - minDataY < MIN_AXIS_RANGE_Y) {
-                    isDataRangeSmall = true;
-                } else {
-                    isDataRangeSmall = false;
-                }
-            } catch (EmptyDataException e) {
-                throw new RuntimeException("Data is empty");
+            if (maxPrice - minPrice < MIN_AXIS_RANGE_Y) {
+                isDataRangeSmall = true;
+            } else {
+                isDataRangeSmall = false;
             }
         }
 

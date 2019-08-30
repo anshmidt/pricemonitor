@@ -8,9 +8,8 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.anshmidt.pricemonitor.data.Product;
-import com.anshmidt.pricemonitor.data.ProductInStore;
-import com.anshmidt.pricemonitor.data.Store;
+import com.anshmidt.pricemonitor.data.DataManager;
+import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.BoltynScraper;
 import com.anshmidt.pricemonitor.scrapers.DebugRandomScraper;
 import com.anshmidt.pricemonitor.scrapers.Digital812Scraper;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -102,12 +100,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void addAllStores() {
-        addStoreIfNotExists(YandexMarketMinScraper.TITLE, YandexMarketMinScraper.URL);
-        addStoreIfNotExists(TKitScraper.TITLE, TKitScraper.URL);
-        addStoreIfNotExists(Digital812Scraper.TITLE, Digital812Scraper.URL);
-        addStoreIfNotExists(EcoDriftScraper.TITLE, EcoDriftScraper.URL);
-        addStoreIfNotExists(DebugRandomScraper.TITLE, DebugRandomScraper.URL);
-        addStoreIfNotExists(BoltynScraper.TITLE, BoltynScraper.URL);
+        addStoreIfNotExists(YandexMarketMinScraper.NAME, YandexMarketMinScraper.URL);
+        addStoreIfNotExists(TKitScraper.NAME, TKitScraper.URL);
+        addStoreIfNotExists(Digital812Scraper.NAME, Digital812Scraper.URL);
+        addStoreIfNotExists(EcoDriftScraper.NAME, EcoDriftScraper.URL);
+        addStoreIfNotExists(DebugRandomScraper.NAME, DebugRandomScraper.URL);
+        addStoreIfNotExists(BoltynScraper.NAME, BoltynScraper.URL);
     }
 
     // for debug purposes
@@ -130,6 +128,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + PRICES_TABLE_NAME);
         db.execSQL("DELETE FROM " + ITEMS_TABLE_NAME);
         db.execSQL("DELETE FROM " + STORES_TABLE_NAME);
+    }
+
+    public void dropDb() {
+        db.execSQL("DROP TABLE IF EXISTS " + PRICES_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + ITEMS_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + STORES_TABLE_NAME);
     }
 
     public void recreateDb() {
@@ -490,36 +494,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d(LOG_TAG, "All prices for item " + itemId + " deleted");
     }
 
-    public ArrayList<Product> getAllProducts(int[] storeColors) {
 
-        ArrayList<Product> allProducts = new ArrayList<>();
-        ArrayList<Integer> allItemIds = getAllItemsIdList();
-        for (int itemId : allItemIds) {
-            String itemName = getItemTitle(itemId);
-            String itemUrl = getItemUrl(itemId);
-            String storeName = getStoreTitle(itemId);
-            String storeUrl = getStoreUrl(itemId);
-            int storeId = getStoreIdByTitle(storeName);
-            int storeColor = dataManager.getStoreColor(storeId, storeColors);
-            TreeMap<Date, Integer> pricesForItem = getAllPricesWithDate(itemId);
-
-            Store store = new Store(storeUrl, storeName, storeId, storeColor);
-            ProductInStore productInStore = new ProductInStore(itemId, itemUrl, store, pricesForItem);
-
-            boolean doAllProductsListContainProduct = dataManager.doAllProductsListContainProduct(itemName, allProducts);
-
-            if (doAllProductsListContainProduct) {
-                Product product = dataManager.getProductWithName(itemName, allProducts);
-                product.productInStoreList.add(productInStore);
-            } else {
-                ArrayList<ProductInStore> productInStoreList = new ArrayList<>();
-                productInStoreList.add(productInStore);
-                Product product = new Product(itemName, productInStoreList);
-                allProducts.add(product);
-            }
-        }
-        return allProducts;
-    }
 
 
 

@@ -13,29 +13,29 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
-import com.anshmidt.pricemonitor.data.Product;
-import com.anshmidt.pricemonitor.data.ProductInStore;
+import com.anshmidt.pricemonitor.data.DataManager;
+import com.anshmidt.pricemonitor.data.ItemData;
+import com.anshmidt.pricemonitor.data.ProductData;
 import com.anshmidt.pricemonitor.dialogs.ProductSettingsBottomSheetFragment;
-import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
+import com.anshmidt.pricemonitor.room.entity.Price;
 import com.jjoe64.graphview.GraphView;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.TreeMap;
+import java.util.List;
 
-public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsListMultipleStoresAdapter.ViewHolder> implements PriceInStoreListAdapter.PricesListListener {
+public class ProductsListAdapter extends RecyclerView.Adapter<ProductsListAdapter.ViewHolder> implements PriceInStoreListAdapter.PricesListListener {
 
     private Context context;
-    public ArrayList<Product> products;
+    public List<ProductData> productDataList;
     private DataManager dataManager;
     private GraphPlotter graphPlotter;
+    private StoreColorAssigner storeColorAssigner;
 
-    public ItemsListMultipleStoresAdapter(Context context, ArrayList<Product> products, DataManager dataManager, GraphPlotter graphPlotter) {
+    public ProductsListAdapter(Context context, List<ProductData> productDataList, DataManager dataManager, GraphPlotter graphPlotter, StoreColorAssigner storeColorAssigner) {
         this.context = context;
-        this.products = products;
+        this.productDataList = productDataList;
         this.dataManager = dataManager;
         this.graphPlotter = graphPlotter;
+        this.storeColorAssigner = storeColorAssigner;
     }
 
     @NonNull
@@ -48,8 +48,8 @@ public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsLi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
-        Product product = products.get(position);
-        final String productName = product.name;
+        ProductData productData = productDataList.get(position);
+        final String productName = productData.product.name;
         viewHolder.productTitleTextView.setText(productName);
         viewHolder.moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,28 +60,32 @@ public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsLi
 
         viewHolder.priceInStoreListRecyclerView.setLayoutManager(new LinearLayoutManager(context));
 
-        try {
-            ArrayList<CurrentPriceInStore> currentPriceInStoreList = dataManager.retrieveLastPricesOfProduct(product);
-            PriceInStoreListAdapter priceInStoreListAdapter = new PriceInStoreListAdapter(currentPriceInStoreList, context);
-            priceInStoreListAdapter.setPricesListListener(this, viewHolder, position);
-            viewHolder.priceInStoreListRecyclerView.setAdapter(priceInStoreListAdapter);
-        } catch (EmptyDataException e) {
-            throw new RuntimeException("Cannot retrieve last prices of product: " + product);
+        PriceInStoreListAdapter priceInStoreListAdapter = new PriceInStoreListAdapter(productData, context, dataManager, storeColorAssigner);
+        priceInStoreListAdapter.setPricesListListener(this, viewHolder, position);
+        viewHolder.priceInStoreListRecyclerView.setAdapter(priceInStoreListAdapter);
+
+        graphPlotter.clearGraph(viewHolder.graph);
+
+        if (dataManager.isEmpty(productData)) {
+            graphPlotter.setXAxisRange(viewHolder.graph, null, null, false);
+        } else {
+            graphPlotter.setXAxisRange(
+                    viewHolder.graph,
+                    dataManager.getMinDate(productData).get(),
+                    dataManager.getMaxDate(productData).get(),
+                    true);
         }
 
-        ArrayList<ProductInStore> items = product.productInStoreList;
-        graphPlotter.clearGraph(viewHolder.graph);
-        graphPlotter.setXAxisRange(viewHolder.graph, dataManager.getMinDate(items), dataManager.getMaxDate(items), true);
-        for (ProductInStore item : items) {
-            TreeMap<Date, Integer> dataToDisplay = item.prices;
-            int graphColor = item.store.color;
-            graphPlotter.addSeriesToGraph(dataToDisplay, viewHolder.graph, graphColor, false);
+        for (ItemData itemData : productData.itemDataList) {
+            int graphColor = storeColorAssigner.getColorByStoreId(itemData.store.id);
+            graphPlotter.addSeriesToGraph(itemData.prices, viewHolder.graph, graphColor, false);
         }
+
     }
 
     @Override
     public int getItemCount() {
-        return products.size();
+        return productDataList.size();
     }
 
     private void displayMainBottomSheet(String productName) {
@@ -112,19 +116,18 @@ public class ItemsListMultipleStoresAdapter extends RecyclerView.Adapter<ItemsLi
 
     @Override
     public void onStoreIconClicked(String clickedStoreName, ViewHolder parentViewHolder, int position) {
-        TreeMap<Date, Integer> dataToDisplay = null;
-        int storeColor = -1;
-
-        Product product = products.get(position);
-        ArrayList<ProductInStore> items = product.productInStoreList;
-        for (ProductInStore item : items) {
-            if (item.store.title.equals(clickedStoreName)) {
-                dataToDisplay = item.prices;
-                storeColor = item.store.color;
+        // display graph series corresponding to the clicked store on top of the other series
+        ProductData productData = productDataList.get(position);
+        for (ItemData itemData : productData.itemDataList) {
+            String storeName = itemData.store.name;
+            if (storeName.equals(clickedStoreName)) {
+                int storeColor = storeColorAssigner.getColorByStoreId(itemData.store.id);
+                List<Price> clickedItemPrices = itemData.prices;
+                graphPlotter.addSeriesToGraph(clickedItemPrices, parentViewHolder.graph, storeColor, false);
             }
         }
 
-        graphPlotter.addSeriesToGraph(dataToDisplay, parentViewHolder.graph, storeColor, false);
     }
+
 
 }

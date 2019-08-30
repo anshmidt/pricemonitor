@@ -8,10 +8,10 @@ import java.util.regex.Pattern;
 public class YandexMarketMinScraper extends StoreScraper {
 
     public static final String URL = "market.yandex.ru";
-    public static final String TITLE = "ya.market min";
+    public static final String NAME = "ya.market min";
 
     public YandexMarketMinScraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

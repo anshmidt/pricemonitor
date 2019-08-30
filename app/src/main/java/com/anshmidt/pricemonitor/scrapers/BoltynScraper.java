@@ -2,21 +2,16 @@ package com.anshmidt.pricemonitor.scrapers;
 
 import android.content.Context;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BoltynScraper extends StoreScraper {
 
     public static final String URL = "spb.boltyn.ru";
-    public static final String TITLE = "boltyn.ru";
+    public static final String NAME = "boltyn.ru";
 
     public BoltynScraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

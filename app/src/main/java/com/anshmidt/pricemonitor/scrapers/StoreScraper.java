@@ -31,14 +31,14 @@ public abstract class StoreScraper {
     Context context;
     StoreScraperListener storeScraperListener;
     public final String storeUrl;
-    public final String storeTitle;
+    public final String storeName;
     private final String LOG_TAG = this.getClass().getSimpleName();
     public static final int PRICE_NOT_FOUND = 0;
 
-    public StoreScraper(Context context, String storeUrl, String storeTitle) {
+    public StoreScraper(Context context, String storeUrl, String storeName) {
         this.context = context;
         this.storeUrl = storeUrl;
-        this.storeTitle = storeTitle;
+        this.storeName = storeName;
     }
 
     public void setStoreScraperListener(StoreScraperListener storeScraperListener) {

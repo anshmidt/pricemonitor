@@ -31,27 +31,28 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
-public class AddItemDialogFragment extends DialogFragment implements StoreScraper.StoreScraperListener {
+//TODO: add verification if product already present
+public class AddProductDialogFragment extends DialogFragment implements StoreScraper.StoreScraperListener {
 
 
-    public interface AddItemDialogListener {
-        void onItemAdded(String itemName, String itemUrl, String storeUrl, int price);
+    public interface AddProductDialogListener {
+        void onProductAdded(String productName, String itemUrl, String storeUrl, int price);
     }
 
-    public final String FRAGMENT_TAG = "AddItemDialog";
+    public final String FRAGMENT_TAG = "AddProductDialog";
     public static final String KEY_PRODUCT_NAME = "product_name";
-    EditText itemNameEditText;
+    EditText productNameEditText;
     EditText urlEditText;
     TextInputLayout urlInputLayout;
-    TextInputLayout itemNameInputLayout;
+    TextInputLayout productNameInputLayout;
 
     @Inject DatabaseHelper databaseHelper;
 
     boolean urlValidated = false;
-    boolean itemNameValidated = false;
+    boolean productNameValidated = false;
     String enteredUrl;
     String knownStoreUrl;
-    String itemName;
+    String productName;
     String itemUrl;
     int price = StoreScraper.PRICE_NOT_FOUND;
     AlertDialog dialog;
@@ -70,40 +71,40 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         final LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View subView = inflater.inflate(R.layout.dialog_add_item, null);
+        View subView = inflater.inflate(R.layout.dialog_add_product, null);
 
-        itemNameEditText = subView.findViewById(R.id.itemname_additemdialog_edittext);
-        urlEditText = subView.findViewById(R.id.url_additemdialog_edittext);
-        urlInputLayout = subView.findViewById(R.id.url_additemdialog_layout);
-        itemNameInputLayout = subView.findViewById(R.id.itemname_additemdialog_layout);
-        clearUrlButton = subView.findViewById(R.id.clearurl_additemdialog_button);
+        productNameEditText = subView.findViewById(R.id.productname_addproductdialog_edittext);
+        urlEditText = subView.findViewById(R.id.url_addproductdialog_edittext);
+        urlInputLayout = subView.findViewById(R.id.url_addproductdialog_layout);
+        productNameInputLayout = subView.findViewById(R.id.productname_addproductdialog_layout);
+        clearUrlButton = subView.findViewById(R.id.clearurl_addproductdialog_button);
 
-        requestProgressBar = subView.findViewById(R.id.requestprogress_additemdialog_progressbar);
-        requestStatusTextView = subView.findViewById(R.id.request_status_additemdialog_textview);
+        requestProgressBar = subView.findViewById(R.id.requestprogress_addproductdialog_progressbar);
+        requestStatusTextView = subView.findViewById(R.id.request_status_addproductdialog_textview);
 
         Bundle bundle = getArguments();
         if (bundle != null) {
             String productName = bundle.getString(KEY_PRODUCT_NAME);
-            itemNameEditText.setText(productName);
-            itemNameEditText.setKeyListener(null);
+            productNameEditText.setText(productName);
+            productNameEditText.setKeyListener(null);
             urlEditText.requestFocus();
-            itemNameValidated = true;
-            itemName = productName;
+            productNameValidated = true;
+            this.productName = productName;
         }
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(subView);
 
-        builder.setPositiveButton(R.string.add_button_additemdialog, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.add_button_addproductdialog, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                AddItemDialogFragment.AddItemDialogListener listener = (AddItemDialogListener) getActivity();
-                listener.onItemAdded(itemName, itemUrl, knownStoreUrl, price);
+                AddProductDialogListener listener = (AddProductDialogListener) getActivity();
+                listener.onProductAdded(productName, itemUrl, knownStoreUrl, price);
             }
         });
 
-        builder.setNegativeButton(R.string.cancel_button_additemdialog, new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.cancel_button_addproductdialog, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -122,7 +123,7 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
 
-        itemNameEditText.addTextChangedListener(new TextWatcher() {
+        productNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -135,16 +136,16 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
 
             @Override
             public void afterTextChanged(Editable s) {
-                String enteredItemName = s.toString();
-                if (isItemNameValidated(enteredItemName)) {
-                    itemNameInputLayout.setError(null);
-                    itemNameValidated = true;
-                    itemName = enteredItemName;
+                String enteredProductName = s.toString();
+                if (isProductNameValid(enteredProductName)) {
+                    productNameInputLayout.setError(null);
+                    productNameValidated = true;
+                    productName = enteredProductName;
                 } else {
-                    itemNameInputLayout.setError(getString(R.string.error_invalid_itemname_additemdialog));
-                    itemNameValidated = false;
+                    productNameInputLayout.setError(getString(R.string.error_invalid_productname_addproductdialog));
+                    productNameValidated = false;
                 }
-                setPositiveButtonState(itemNameValidated, urlValidated, price);
+                setPositiveButtonState(productNameValidated, urlValidated, price);
             }
         });
 
@@ -178,7 +179,7 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
                 enteredUrl = s.toString();
                 lastTextChangedTimestamp = 0;
                 handler.removeCallbacks(serverRequestTask);
-                setPositiveButtonState(itemNameValidated, urlValidated, price);
+                setPositiveButtonState(productNameValidated, urlValidated, price);
 
                 String urlValidatedLocallyStatus = validateUrlLocally(enteredUrl);
                 if (!urlValidatedLocallyStatus.equals(STATUS_URL_VALIDATED_LOCALLY)) {
@@ -207,7 +208,7 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
         } else {
             displaySuccessfulResponseButPriceNotFound(knownStoreUrl);
         }
-        setPositiveButtonState(itemNameValidated, urlValidated, price);
+        setPositiveButtonState(productNameValidated, urlValidated, price);
 
     }
 
@@ -215,14 +216,14 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
     public void onErrorResponseFromServer(VolleyError error) {
         String connectionError = error.toString();
         if (connectionError.replace(" ", "").isEmpty()) {
-            connectionError = getString(R.string.error_unknown_additemdialog);
+            connectionError = getString(R.string.error_unknown_addproductdialog);
         }
         displayErrorResponse(connectionError, knownStoreUrl);
     }
 
 
-    public void setPositiveButtonState(boolean itemNameValidated, boolean urlValidated, int price) {
-        if (itemNameValidated && urlValidated && (price != StoreScraper.PRICE_NOT_FOUND)) {
+    public void setPositiveButtonState(boolean productNameValid, boolean urlValid, int price) {
+        if (productNameValid && urlValid && (price != StoreScraper.PRICE_NOT_FOUND)) {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(true);
         } else {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
@@ -233,16 +234,16 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
 
     private String validateUrlLocally(final String url) {
         if (url.isEmpty()) {
-            return getString(R.string.error_empty_url_additemdialog);
+            return getString(R.string.error_empty_url_addproductdialog);
         }
 
         if (!doesStringHaveUrlFormat(url)) {
-            return getString(R.string.error_noturl_additemdialog);
+            return getString(R.string.error_noturl_addproductdialog);
         }
 
         final String knownStoreForUrl = getKnownStoreForUrl(url);
         if (knownStoreForUrl == null) {
-            return getString(R.string.error_unknown_store_additemdialog);
+            return getString(R.string.error_unknown_store_addproductdialog);
         }
 
         return STATUS_URL_VALIDATED_LOCALLY;
@@ -264,37 +265,37 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
 
     private void displayStoreFoundConnectionInProgress(String knownStoreUrl) {
         urlInputLayout.setErrorEnabled(false);
-        urlInputLayout.setHelperText(getString(R.string.message_store_found_additemdialog, knownStoreUrl));
+        urlInputLayout.setHelperText(getString(R.string.message_store_found_addproductdialog, knownStoreUrl));
         requestProgressBar.setVisibility(View.VISIBLE);
         requestStatusTextView.setVisibility(View.VISIBLE);
-        requestStatusTextView.setText(getString(R.string.message_retrieving_price_from_server_additemdialog));
+        requestStatusTextView.setText(getString(R.string.message_retrieving_price_from_server_addproductdialog));
         requestStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorText));
     }
 
     private void displaySuccessfulResponse(int price, String knownStoreUrl) {
         urlInputLayout.setErrorEnabled(false);
-        urlInputLayout.setHelperText(getString(R.string.message_store_found_additemdialog, knownStoreUrl));
+        urlInputLayout.setHelperText(getString(R.string.message_store_found_addproductdialog, knownStoreUrl));
         requestProgressBar.setVisibility(View.GONE);
         requestStatusTextView.setVisibility(View.VISIBLE);
-        requestStatusTextView.setText(getString(R.string.message_price_retrieved_additemdialog, price));
+        requestStatusTextView.setText(getString(R.string.message_price_retrieved_addproductdialog, price));
         requestStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorText));
     }
     
     private void displaySuccessfulResponseButPriceNotFound(String knownStoreUrl) {
         urlInputLayout.setErrorEnabled(false);
-        urlInputLayout.setHelperText(getString(R.string.message_store_found_additemdialog, knownStoreUrl));
+        urlInputLayout.setHelperText(getString(R.string.message_store_found_addproductdialog, knownStoreUrl));
         requestProgressBar.setVisibility(View.GONE);
         requestStatusTextView.setVisibility(View.VISIBLE);
-        requestStatusTextView.setText(getString(R.string.error_cannot_extract_price_additemdialog));
+        requestStatusTextView.setText(getString(R.string.error_cannot_extract_price_addproductdialog));
         requestStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorError));
     }
 
     private void displayErrorResponse(String errorText, String knownStoreUrl) {
         urlInputLayout.setErrorEnabled(false);
-        urlInputLayout.setHelperText(getString(R.string.message_store_found_additemdialog, knownStoreUrl));
+        urlInputLayout.setHelperText(getString(R.string.message_store_found_addproductdialog, knownStoreUrl));
         requestProgressBar.setVisibility(View.GONE);
         requestStatusTextView.setVisibility(View.VISIBLE);
-        requestStatusTextView.setText(getString(R.string.error_cannot_connect_additemdialog, errorText));
+        requestStatusTextView.setText(getString(R.string.error_cannot_connect_addproductdialog, errorText));
         requestStatusTextView.setTextColor(ContextCompat.getColor(getContext(), R.color.colorError));
     }
 
@@ -329,8 +330,8 @@ public class AddItemDialogFragment extends DialogFragment implements StoreScrape
         return true;
     }
 
-    private boolean isItemNameValidated(String itemName) {
-        if (itemName.length() > 0) {
+    private boolean isProductNameValid(String productName) {
+        if (productName.length() > 0) {
             return true;
         } else {
             return false;

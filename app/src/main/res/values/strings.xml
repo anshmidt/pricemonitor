@@ -22,17 +22,17 @@
     <string name="title_additemdialog">Add new item</string>
     <string name="hint_itemname_additemdialog">Item name</string>
     <string name="hint_url_additemdialog">Item URL</string>
-    <string name="cancel_button_additemdialog">Cancel</string>
-    <string name="add_button_additemdialog">Add</string>
-    <string name="error_unknown_store_additemdialog">This URL belongs to unknown store</string>
-    <string name="error_noturl_additemdialog">This is not an URL</string>
-    <string name="error_empty_url_additemdialog">URL is empty</string>
-    <string name="error_invalid_itemname_additemdialog">Invalid item name</string>
-    <string name="message_store_found_additemdialog">Known store found for this URL: \'%1$s\'.</string>
-    <string name="message_retrieving_price_from_server_additemdialog">Connecting to server and retrieving price...</string>
-    <string name="message_price_retrieved_additemdialog">Price from server retrieved successfully: %1$d</string>
-    <string name="error_cannot_connect_additemdialog">Cannot connect to server: %1$s</string>
-    <string name="error_cannot_extract_price_additemdialog">Connected to server, but cannot extract price from the request</string>
-    <string name="error_unknown_additemdialog">Unknown error</string>
+    <string name="cancel_button_addproductdialog">Cancel</string>
+    <string name="add_button_addproductdialog">Add</string>
+    <string name="error_unknown_store_addproductdialog">This URL belongs to unknown store</string>
+    <string name="error_noturl_addproductdialog">This is not an URL</string>
+    <string name="error_empty_url_addproductdialog">URL is empty</string>
+    <string name="error_invalid_productname_addproductdialog">Invalid product name</string>
+    <string name="message_store_found_addproductdialog">Known store found for this URL: \'%1$s\'.</string>
+    <string name="message_retrieving_price_from_server_addproductdialog">Connecting to server and retrieving price...</string>
+    <string name="message_price_retrieved_addproductdialog">Price from server retrieved successfully: %1$d</string>
+    <string name="error_cannot_connect_addproductdialog">Cannot connect to server: %1$s</string>
+    <string name="error_cannot_extract_price_addproductdialog">Connected to server, but cannot extract price from the request</string>
+    <string name="error_unknown_addproductdialog">Unknown error</string>
 
 </resources>

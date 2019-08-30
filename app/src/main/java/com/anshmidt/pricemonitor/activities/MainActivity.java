@@ -1,17 +1,10 @@
 package com.anshmidt.pricemonitor.activities;
 
 import android.app.FragmentManager;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
 import android.arch.lifecycle.Observer;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,18 +14,25 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.anshmidt.pricemonitor.DataManager;
+import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.GraphPlotter;
-import com.anshmidt.pricemonitor.ItemsListMultipleStoresAdapter;
+import com.anshmidt.pricemonitor.ProductsListAdapter;
 import com.anshmidt.pricemonitor.NotificationHelper;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
+import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.R;
 import com.anshmidt.pricemonitor.ServerRequestsWorker;
-import com.anshmidt.pricemonitor.dialogs.AddItemDialogFragment;
+import com.anshmidt.pricemonitor.StoreColorAssigner;
+import com.anshmidt.pricemonitor.dialogs.AddProductDialogFragment;
+import com.anshmidt.pricemonitor.room.entity.Item;
+import com.anshmidt.pricemonitor.room.entity.Price;
+import com.anshmidt.pricemonitor.room.entity.Product;
+import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -47,21 +47,25 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-public class MainActivity extends AppCompatActivity implements AddItemDialogFragment.AddItemDialogListener {
+public class MainActivity extends AppCompatActivity implements AddProductDialogFragment.AddProductDialogListener {
 
 
     Toolbar toolbar;
 
-    @Inject DatabaseHelper databaseHelper;
+    @Inject
+    DatabaseHelper databaseHelper;
+
+    @Inject PricesRepository pricesRepository;
 
     @Inject DataManager dataManager;
-    ItemsListMultipleStoresAdapter itemsListMultipleStoresAdapter;
+    ProductsListAdapter productsListAdapter;
     @Inject GraphPlotter graphPlotter;
     FloatingActionButton addItemButton;
     final String LOG_TAG = MainActivity.class.getSimpleName();
     final int INTERVAL_BETWEEN_SERVER_REQUESTS = 30;
     @Inject int[] storesColors;
     @Inject NotificationHelper notificationHelper;
+    @Inject StoreColorAssigner storeColorAssigner;
 
 
     @Override
@@ -72,15 +76,23 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
         PriceMonitorApplication.getComponent().inject(this);
 
         //temp
-        databaseHelper.printDbToLog();
+//        databaseHelper.dropDb();
+        Log.d(LOG_TAG, "activity----");
+//        pricesRepository.clearAllTables();
+//        pricesRepository.addStoresIfNotPresent();
+//        pricesRepository.fillDbWithTestData();
+        pricesRepository.printDatabaseToLog();
+
+
+//        databaseHelper.printDbToLog();
 
         RecyclerView recyclerView = findViewById(R.id.items_recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        itemsListMultipleStoresAdapter = new ItemsListMultipleStoresAdapter(MainActivity.this, databaseHelper.getAllProducts(storesColors), dataManager, graphPlotter);
-        recyclerView.setAdapter(itemsListMultipleStoresAdapter);
+        productsListAdapter = new ProductsListAdapter(MainActivity.this, pricesRepository.getAllProductData(), dataManager, graphPlotter, storeColorAssigner);
+        recyclerView.setAdapter(productsListAdapter);
 
-        sendPeriodicServerRequests();
+//        sendPeriodicServerRequests();
 
         addItemButton = (FloatingActionButton) findViewById(R.id.add_item_button);
         addItemButton.setOnClickListener(new View.OnClickListener() {
@@ -111,8 +123,9 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
     @Override
     protected void onResume() {
         super.onResume();
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
-        itemsListMultipleStoresAdapter.notifyDataSetChanged();
+        productsListAdapter.productDataList = pricesRepository.getAllProductData();
+//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
+        productsListAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -127,26 +140,26 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
 
         switch (id) {
             case R.id.clear_db_menu_item: {
-                databaseHelper.clearPricesAndItems();
-                recreate();
+//                databaseHelper.clearPricesAndItems();
+//                recreate();
                 break;
             }
             case R.id.action_refresh: {
-                sendOneTimeServerRequests();
+//                sendOneTimeServerRequests();
                 break;
             }
             case R.id.fill_db_menu_item: {
-                databaseHelper.fillDbWithTestData();
-                recreate();
+//                databaseHelper.fillDbWithTestData();
+//                recreate();
                 break;
             }
             case R.id.delete_recent_price_menu_item: {
-                databaseHelper.deleteLastPriceForEachItem();
-                recreate();
+//                databaseHelper.deleteLastPriceForEachItem();
+//                recreate();
                 break;
             }
             case R.id.stop_requests_menu_item: {
-                WorkManager.getInstance().cancelAllWork();
+//                WorkManager.getInstance().cancelAllWork();
                 break;
             }
 
@@ -156,17 +169,33 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
     }
 
     @Override
-    public void onItemAdded(String itemName, String itemUrl, String storeUrl, int price) {
-        int itemId = databaseHelper.addItemIfNotExists(itemName, itemUrl);
-        long timestamp = System.currentTimeMillis();
-        databaseHelper.addPrice(itemId, price, timestamp);
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
-        itemsListMultipleStoresAdapter.notifyDataSetChanged();
+    public void onProductAdded(String productName, String itemUrl, String storeUrl, int price) {
+        Store store = pricesRepository.getStoreByUrl(storeUrl);
+        int newProductId = pricesRepository.addProductIfNotExists(new Product(productName));
+        Product newProduct = new Product(newProductId, productName);
+
+        int itemId = pricesRepository.addItemIfNotExists(new Item(itemUrl, newProduct.id, store.id));
+        Item newItem = new Item(itemId, itemUrl, newProduct.id, store.id);
+
+        Date currentDate = new Date(System.currentTimeMillis());
+        int priceId = pricesRepository.addPrice(new Price(currentDate, itemId, price));
+        Price newPrice = new Price(priceId, currentDate, itemId, price);
+
+        productsListAdapter.productDataList = dataManager.addProduct(newProduct, productsListAdapter.productDataList);
+        productsListAdapter.productDataList = dataManager.addItem(newItem, store, productsListAdapter.productDataList);
+        productsListAdapter.productDataList = dataManager.addPrice(newPrice, newItem, productsListAdapter.productDataList);
+
+//        int itemId = databaseHelper.addItemIfNotExists(productName, itemUrl);
+//        long timestamp = System.currentTimeMillis();
+//        databaseHelper.addPrice(itemId, price, timestamp);
+//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
+        productsListAdapter.notifyDataSetChanged();
     }
 
     public void onItemDeleted(int itemId) {
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
-        itemsListMultipleStoresAdapter.notifyDataSetChanged();
+        //TODO
+//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
+//        productsListAdapter.notifyDataSetChanged();
     }
 
     public void sendPeriodicServerRequests() {
@@ -243,20 +272,22 @@ public class MainActivity extends AppCompatActivity implements AddItemDialogFrag
             return;
         }
 
-        int itemId = databaseHelper.getItemId(itemUrl);
+        Item item = pricesRepository.getItemByUrl(itemUrl);
+        notificationHelper.showPriceDroppedNotificationIfNeeded(item.id, priceFromServer, databaseHelper);
 
-        notificationHelper.showPriceDroppedNotificationIfNeeded(itemId, priceFromServer, databaseHelper);
-        databaseHelper.addPriceWithCurrentTimestamp(itemId, priceFromServer);
+        Date currentDate = new Date(System.currentTimeMillis());
+        int priceId = pricesRepository.addPrice(new Price(currentDate, item.id, priceFromServer));
+        Price newPrice = new Price(priceId, currentDate, item.id, priceFromServer);
 
-        itemsListMultipleStoresAdapter.products = databaseHelper.getAllProducts(storesColors);
-        itemsListMultipleStoresAdapter.notifyDataSetChanged();
+        productsListAdapter.productDataList = dataManager.addPrice(newPrice, item, productsListAdapter.productDataList);
+        productsListAdapter.notifyDataSetChanged();
     }
 
 
     public void onAddItemButtonClicked() {
         FragmentManager manager = getFragmentManager();
-        AddItemDialogFragment addItemDialogFragment = new AddItemDialogFragment();
-        addItemDialogFragment.show(manager, addItemDialogFragment.FRAGMENT_TAG);
+        AddProductDialogFragment addProductDialogFragment = new AddProductDialogFragment();
+        addProductDialogFragment.show(manager, addProductDialogFragment.FRAGMENT_TAG);
     }
 
 

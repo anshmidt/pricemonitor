@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.design.widget.TextInputLayout
-        android:id="@+id/itemname_additemdialog_layout"
+        android:id="@+id/productname_addproductdialog_layout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -32,7 +32,7 @@
         app:layout_constraintTop_toBottomOf="@+id/title_additemdialog_textview">
 
         <android.support.design.widget.TextInputEditText
-            android:id="@+id/itemname_additemdialog_edittext"
+            android:id="@+id/productname_addproductdialog_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:theme="@style/AddItemEditText" />
@@ -41,7 +41,7 @@
 
 
     <android.support.design.widget.TextInputLayout
-        android:id="@+id/url_additemdialog_layout"
+        android:id="@+id/url_addproductdialog_layout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,10 +53,10 @@
         app:errorTextAppearance="@style/AddItemEditTextError"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/itemname_additemdialog_layout">
+        app:layout_constraintTop_toBottomOf="@+id/productname_addproductdialog_layout">
 
         <android.support.design.widget.TextInputEditText
-            android:id="@+id/url_additemdialog_edittext"
+            android:id="@+id/url_addproductdialog_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:theme="@style/AddItemEditText"
@@ -66,18 +66,18 @@
     </android.support.design.widget.TextInputLayout>
 
     <ImageButton
-        android:id="@+id/clearurl_additemdialog_button"
+        android:id="@+id/clearurl_addproductdialog_button"
         android:layout_width="30dp"
         android:layout_height="30dp"
 
         android:layout_marginTop="17dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/ic_clear"
-        app:layout_constraintEnd_toEndOf="@+id/url_additemdialog_layout"
-        app:layout_constraintTop_toTopOf="@+id/url_additemdialog_layout" />
+        app:layout_constraintEnd_toEndOf="@+id/url_addproductdialog_layout"
+        app:layout_constraintTop_toTopOf="@+id/url_addproductdialog_layout" />
 
     <ProgressBar
-        android:id="@+id/requestprogress_additemdialog_progressbar"
+        android:id="@+id/requestprogress_addproductdialog_progressbar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -85,10 +85,10 @@
         android:visibility="gone"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/url_additemdialog_layout" />
+        app:layout_constraintTop_toBottomOf="@+id/url_addproductdialog_layout" />
 
     <TextView
-        android:id="@+id/request_status_additemdialog_textview"
+        android:id="@+id/request_status_addproductdialog_textview"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -98,8 +98,8 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/requestprogress_additemdialog_progressbar"
-        app:layout_constraintTop_toBottomOf="@+id/url_additemdialog_layout" />
+        app:layout_constraintStart_toEndOf="@+id/requestprogress_addproductdialog_progressbar"
+        app:layout_constraintTop_toBottomOf="@+id/url_addproductdialog_layout" />
 
 
 </android.support.constraint.ConstraintLayout>

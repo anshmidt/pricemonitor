@@ -1,6 +1,7 @@
 package com.anshmidt.pricemonitor.exceptions;
 
-public class EmptyDataException extends Exception {
+// it's unchecked because of Stream API restrictions
+public class EmptyDataException extends RuntimeException {
     public EmptyDataException() {
     }
 

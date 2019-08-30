@@ -69,14 +69,14 @@ public class ProductSettingsBottomSheetFragment extends BottomSheetDialogFragmen
         addStoreTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AddItemDialogFragment addItemDialogFragment = new AddItemDialogFragment();
+                AddProductDialogFragment addProductDialogFragment = new AddProductDialogFragment();
 
                 Bundle productBundle = new Bundle();
-                productBundle.putString(addItemDialogFragment.KEY_PRODUCT_NAME, productName);
-                addItemDialogFragment.setArguments(productBundle);
+                productBundle.putString(addProductDialogFragment.KEY_PRODUCT_NAME, productName);
+                addProductDialogFragment.setArguments(productBundle);
 
                 FragmentManager manager = getActivity().getFragmentManager();
-                addItemDialogFragment.show(manager, addItemDialogFragment.FRAGMENT_TAG);
+                addProductDialogFragment.show(manager, addProductDialogFragment.FRAGMENT_TAG);
                 dismiss();
             }
         });

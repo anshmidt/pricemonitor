@@ -7,10 +7,10 @@ import java.util.Random;
 public class DebugRandomScraper extends StoreScraper {
 
     public static final String URL = "stackoverflow.com";
-    public static final String TITLE = "debug random";
+    public static final String NAME = "debug random";
 
     public DebugRandomScraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

@@ -10,10 +10,10 @@ import org.jsoup.select.Elements;
 public class Digital812Scraper extends StoreScraper {
 
     public static final String URL = "digital812.su";
-    public static final String TITLE = "digital 812";
+    public static final String NAME = "digital 812";
 
     public Digital812Scraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

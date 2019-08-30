@@ -2,15 +2,13 @@ package com.anshmidt.pricemonitor.dagger;
 
 import android.content.Context;
 
-import com.anshmidt.pricemonitor.DataManager;
+import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.GraphPlotter;
 import com.anshmidt.pricemonitor.NotificationHelper;
 import com.anshmidt.pricemonitor.R;
-import com.anshmidt.pricemonitor.data.Product;
+import com.anshmidt.pricemonitor.StoreColorAssigner;
 import com.anshmidt.pricemonitor.scrapers.StoreScraperFactory;
-
-import java.util.ArrayList;
 
 import javax.inject.Singleton;
 
@@ -58,13 +56,18 @@ public class AppModule {
     }
 
 //    @Provides
-//    ItemsListMultipleStoresAdapter provideItemsListMultipleStoresAdapter(Context context, ArrayList<Product> products, DataManager dataManager, GraphPlotter graphPlotter) {
-//        return new ItemsListMultipleStoresAdapter(context, products, dataManager, graphPlotter);
+//    ProductsListAdapter provideItemsListMultipleStoresAdapter(Context context, ArrayList<Product> products, DataManager dataManager, GraphPlotter graphPlotter) {
+//        return new ProductsListAdapter(context, products, dataManager, graphPlotter);
 //    }
 
     @Provides
     int[] getStoresColors(Context context) {
         return context.getResources().getIntArray(R.array.storesColors);
+    }
+
+    @Provides
+    StoreColorAssigner provideStoreColorAssigner(Context context) {
+        return new StoreColorAssigner(context);
     }
 
 }

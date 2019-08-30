@@ -10,10 +10,10 @@ import org.jsoup.select.Elements;
 public class TKitScraper extends StoreScraper {
 
     public static final String URL = "t-kit.ru";
-    public static final String TITLE = "t-kit";
+    public static final String NAME = "t-kit";
 
     public TKitScraper(Context context) {
-        super(context, URL, TITLE);
+        super(context, URL, NAME);
     }
 
     @Override

@@ -1,58 +1,51 @@
 package com.anshmidt.pricemonitor;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.amulyakhare.textdrawable.TextDrawable;
-import com.anshmidt.pricemonitor.data.CurrentPriceInStore;
+import com.anshmidt.pricemonitor.data.DataManager;
+import com.anshmidt.pricemonitor.data.ItemData;
+import com.anshmidt.pricemonitor.data.ProductData;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreListAdapter.ViewHolder> {
 
-    ArrayList<CurrentPriceInStore> priceInStoreList;
+//    ArrayList<CurrentPriceInStore> priceInStoreList;
+    ProductData productData;
     LayoutInflater layoutInflater;
+    DataManager dataManager;
     Context context;
+    StoreColorAssigner storeColorAssigner;
     PricesListListener pricesListListener;
-    ItemsListMultipleStoresAdapter.ViewHolder parentViewHolder;
+    ProductsListAdapter.ViewHolder parentViewHolder;
     int parentPosition;
 
     public interface PricesListListener {
-        void onStoreIconClicked(String storeName, ItemsListMultipleStoresAdapter.ViewHolder parentViewHolder, int parentPosition);
+        void onStoreIconClicked(String storeName, ProductsListAdapter.ViewHolder parentViewHolder, int parentPosition);
     }
 
-    public PriceInStoreListAdapter(ArrayList<CurrentPriceInStore> currentPriceInStoreList, Context context) {
-        this.priceInStoreList = currentPriceInStoreList;
-        this.layoutInflater = LayoutInflater.from(context);
+    public PriceInStoreListAdapter(ProductData productData, Context context, DataManager dataManager, StoreColorAssigner storeColorAssigner) {
+        this.productData = productData;
+        this.dataManager = dataManager;
         this.context = context;
+        this.storeColorAssigner = storeColorAssigner;
+        this.layoutInflater = LayoutInflater.from(context);
     }
 
-    public void setPricesListListener(PricesListListener pricesListListener, ItemsListMultipleStoresAdapter.ViewHolder viewHolder, int parentPosition) {
+    public void setPricesListListener(PricesListListener pricesListListener, ProductsListAdapter.ViewHolder viewHolder, int parentPosition) {
         this.pricesListListener = pricesListListener;
         this.parentViewHolder = viewHolder;
         this.parentPosition = parentPosition;
@@ -68,21 +61,26 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        final CurrentPriceInStore currentPriceInStore = priceInStoreList.get(i);
 
+        ItemData itemData = productData.itemDataList.get(i);
+        int itemCurrentPrice = dataManager.getRecentPriceValue(itemData);
+        String storeName = itemData.store.name;
+        Date recentDate = dataManager.getRecentDate(itemData);
+//        final CurrentPriceInStore currentPriceInStore = priceInStoreList.get(i);
 
-        viewHolder.priceTextView.setText(String.format(Locale.getDefault(), "%,d", currentPriceInStore.price));
+        int storeColor = storeColorAssigner.getColorByStoreId(itemData.store.id);
+        String itemUrl = itemData.item.url;
 
-        viewHolder.storeNameTextView.setText(currentPriceInStore.storeName);
-        displayDate(viewHolder.dateTextView, currentPriceInStore.date);
-        displayStoreIcon(viewHolder.storeIcon, currentPriceInStore.storeName, currentPriceInStore.storeColor);
+        viewHolder.priceTextView.setText(String.format(Locale.getDefault(), "%,d", itemCurrentPrice));
 
-        final String productInStoreUrl = currentPriceInStore.productInStoreUrl;
+        viewHolder.storeNameTextView.setText(storeName);
+        displayDate(viewHolder.dateTextView, recentDate);
+        displayStoreIcon(viewHolder.storeIcon, storeName, storeColor);
 
         viewHolder.gotoUrlImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openProductWebpageInBrowser(productInStoreUrl, context);
+                openProductWebpageInBrowser(itemUrl, context);
             }
         });
 
@@ -112,7 +110,7 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
 
     @Override
     public int getItemCount() {
-        return priceInStoreList.size();
+        return productData.itemDataList.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
