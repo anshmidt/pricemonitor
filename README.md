@@ -20,7 +20,9 @@ Android app for monitoring prices in online stores.
 
 #### Used tools and libraries:
 - Volley - for HTTP requests
+- Room - provides an abstraction layer over SQLite
 - WorkManager API - for scheduling requests
 - [GraphView by jjoe64](https://github.com/jjoe64/GraphView) - for displaying price trends on a graph
 - Dagger 2 - for dependency injection
 - TextDrawable - for displaying store icons
+- Jsoup - for HTML parsing
