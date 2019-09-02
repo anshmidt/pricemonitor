@@ -1,16 +1,10 @@
 package com.anshmidt.pricemonitor;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
 import android.content.Context;
-import android.content.Intent;
 import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import com.anshmidt.pricemonitor.activities.MainActivity;
+import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 import com.anshmidt.pricemonitor.scrapers.StoreScraperFactory;
 
@@ -27,7 +21,6 @@ public class ServerRequestsWorker extends Worker {
     }
 
     Context context;
-    @Inject DatabaseHelper databaseHelper;
     @Inject StoreScraperFactory storeScraperFactory;
     @Inject NotificationHelper notificationHelper;
     public static final String KEY_PRICE = "key_price";
@@ -48,34 +41,24 @@ public class ServerRequestsWorker extends Worker {
     @Override
     public Result doWork() {
 
-        Log.d(LOG_TAG, "worker works");
-        Data outputData = new Data.Builder()
-                .putString("asdf", "asdf")
-                .build();
-//        final int DEFAULT_ITEM_ID = -1;
-//        int itemId = getInputData().getInt(KEY_ITEM_ID, DEFAULT_ITEM_ID);
-//        String storeUrl = databaseHelper.getStoreUrl(itemId);
-//
-//
-//        Log.d(LOG_TAG, "Sending request for itemId: " + itemId + " ("+databaseHelper.getItemTitle(itemId)+" from store "+storeUrl+")");
-//
-//        StoreScraper storeScraper = storeScraperFactory.getStoreScraper(storeUrl);
-//
-//        String itemUrl = databaseHelper.getItemUrl(itemId);
-//        int itemPrice = storeScraper.sendSynchronousRequest(itemUrl);
-//
-//        Log.d(LOG_TAG, "Received response for itemId " + itemId + ": price == " + itemPrice);
-//
+//        Log.d(LOG_TAG, "worker works");
 //        Data outputData = new Data.Builder()
-//                .putInt(KEY_PRICE, itemPrice)
-//                .putString(KEY_ITEM_URL, itemUrl)
+//                .putString("asdf", "asdf")
 //                .build();
-//
-//
-//        if (itemPrice != StoreScraper.PRICE_NOT_FOUND) {
-//            notificationHelper.showPriceDroppedNotificationIfNeeded(itemId, itemPrice, databaseHelper);
-//            databaseHelper.addPriceWithCurrentTimestamp(itemId, itemPrice);
-//        }
+
+        int itemId = getInputData().getInt(KEY_ITEM_ID, Item.ID_NOT_FOUND);
+        String itemUrl = getInputData().getString(KEY_ITEM_URL);
+        StoreScraper storeScraper = storeScraperFactory.getStoreScraperByItemUrl(itemUrl);
+
+        Log.d(LOG_TAG, "Sending request for itemId: " + itemId + ", itemUrl: " + itemUrl);
+        int itemPrice = storeScraper.sendSynchronousRequest(itemUrl);
+        Log.d(LOG_TAG, "Received response for itemId " + itemId + ": price == " + itemPrice);
+
+        Data outputData = new Data.Builder()
+                .putInt(KEY_PRICE, itemPrice)
+                .putInt(KEY_ITEM_ID, itemId)
+                .build();
+
 
         return Result.success(outputData);
     }

@@ -17,22 +17,26 @@ import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.data.ItemData;
 import com.anshmidt.pricemonitor.data.ProductData;
 import com.anshmidt.pricemonitor.dialogs.ProductSettingsBottomSheetFragment;
+import com.anshmidt.pricemonitor.room.dao.ProductDao;
+import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.room.entity.Price;
 import com.jjoe64.graphview.GraphView;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 public class ProductsListAdapter extends RecyclerView.Adapter<ProductsListAdapter.ViewHolder> implements PriceInStoreListAdapter.PricesListListener {
 
-    private Context context;
     public List<ProductData> productDataList;
+    private Context context;
     private DataManager dataManager;
     private GraphPlotter graphPlotter;
     private StoreColorAssigner storeColorAssigner;
 
-    public ProductsListAdapter(Context context, List<ProductData> productDataList, DataManager dataManager, GraphPlotter graphPlotter, StoreColorAssigner storeColorAssigner) {
+    @Inject
+    public ProductsListAdapter(Context context, DataManager dataManager, GraphPlotter graphPlotter, StoreColorAssigner storeColorAssigner) {
         this.context = context;
-        this.productDataList = productDataList;
         this.dataManager = dataManager;
         this.graphPlotter = graphPlotter;
         this.storeColorAssigner = storeColorAssigner;

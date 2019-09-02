@@ -5,8 +5,10 @@ import android.view.ViewGroup;
 
 import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.room.entity.Price;
+import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
+import com.jjoe64.graphview.Viewport;
 import com.jjoe64.graphview.helper.DateAsXAxisLabelFormatter;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -27,13 +29,15 @@ public class GraphPlotter {
 
     private DataManager dataManager;
     private Context context;
-    private final String DATES_ON_AXIS_FORMAT = "dd/MM";
+//    private final String DATE_LABELS_FORMAT = "dd/MM";
+    private final String DATE_LABELS_FORMAT = "dd"; //temp
     private final int PADDING_TO_FIT_VERTICAL_AXIS_LABELS = 74;
     private final int GRAPH_LINE_THICKNESS = 8;
 
     private final int HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS = 3;
 
     private final int POINTS_SIZE = 12;
+
 
 
 
@@ -88,15 +92,9 @@ public class GraphPlotter {
         gridLabelRenderer.setVerticalLabelsColor(context.getColor(R.color.colorText));
         gridLabelRenderer.setHorizontalLabelsColor(context.getColor(R.color.colorText));
 
-//        gridLabelRenderer.setGridStyle(GridLabelRenderer.GridStyle.NONE);
         gridLabelRenderer.setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
 
-//        setXAxisRange(graph, sortedKeys, isDataAvailable);
         setYAxisRange(graph, prices, isDataAvailable);
-
-
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATES_ON_AXIS_FORMAT);
-        gridLabelRenderer.setLabelFormatter(new DateAsXAxisLabelFormatter(context, simpleDateFormat));
 
         gridLabelRenderer.setHumanRounding(false, true);
 
@@ -104,12 +102,14 @@ public class GraphPlotter {
         graph.getViewport().setScrollableY(false); // enables vertical scrolling
         graph.getViewport().setScalable(false); // enables horizontal zooming and scrolling
         graph.getViewport().setScalableY(false); // enables vertical zooming and scrolling
+
     }
 
 
 
     public void setXAxisRange(GraphView graph, Date minDate, Date maxDate, boolean isDataAvailable) {
         final int HORIZONTAL_AXIS_LABELS_COUNT = 4;
+//        final int HORIZONTAL_AXIS_LABELS_COUNT = 3;
         final long MAX_X_IF_DATA_NOT_AVAILABLE = new Date().getTime();
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, -HORIZONTAL_AXIS_RANGE_IF_DATA_NOT_AVAILABLE_DAYS);
@@ -130,10 +130,15 @@ public class GraphPlotter {
                 maxAxisX = maxDataX;
             }
         }
+
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_LABELS_FORMAT);
+        graph.getGridLabelRenderer().setLabelFormatter(new DateAsXAxisLabelFormatter(context, simpleDateFormat));
+
+        graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(minAxisX);
         graph.getViewport().setMaxX(maxAxisX);
-        graph.getViewport().setXAxisBoundsManual(true);
         graph.getGridLabelRenderer().setNumHorizontalLabels(HORIZONTAL_AXIS_LABELS_COUNT);
+
     }
 
 
@@ -185,5 +190,9 @@ public class GraphPlotter {
         int pixels = (int) (dp * scale + 0.5f);
         return pixels;
     }
+
+//    public void addData(GraphView graph, Price newPrice) {
+//        series.appendData(new DataPoint(newPrice.date, newPrice.price))
+//    }
 
 }

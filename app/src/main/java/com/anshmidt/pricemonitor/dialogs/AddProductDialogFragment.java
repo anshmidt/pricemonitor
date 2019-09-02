@@ -21,13 +21,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.volley.VolleyError;
-import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
+import com.anshmidt.pricemonitor.room.PricesRepository;
+import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 import com.anshmidt.pricemonitor.scrapers.StoreScraperFactory;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -46,7 +48,9 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
     TextInputLayout urlInputLayout;
     TextInputLayout productNameInputLayout;
 
-    @Inject DatabaseHelper databaseHelper;
+    @Inject PricesRepository pricesRepository;
+
+//    @Inject DatabaseHelper databaseHelper;
 
     boolean urlValidated = false;
     boolean productNameValidated = false;
@@ -60,6 +64,76 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
     TextView requestStatusTextView;
     ImageButton clearUrlButton;
     private final String STATUS_URL_VALIDATED_LOCALLY = "UrlValidatedLocally";
+
+    class ProductNameTextWatcher implements TextWatcher {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            String enteredProductName = s.toString();
+            if (isProductNameValid(enteredProductName)) {
+                productNameInputLayout.setError(null);
+                productNameValidated = true;
+                productName = enteredProductName;
+            } else {
+                productNameInputLayout.setError(getString(R.string.error_invalid_productname_addproductdialog));
+                productNameValidated = false;
+            }
+            setPositiveButtonState(productNameValidated, urlValidated, price);
+        }
+    }
+
+    class UrlTextWatcher implements TextWatcher {
+        final int DELAY = 2000; //ms after user stops typing
+        long lastTextChangedTimestamp;
+        Handler handler = new Handler();
+
+        Runnable serverRequestTask = new Runnable() {
+            @Override
+            public void run() {
+                if (System.currentTimeMillis() - lastTextChangedTimestamp >= DELAY) {
+                    validateUrlOnServer(enteredUrl);
+                }
+            }
+        };
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            urlValidated = false;
+            price = StoreScraper.PRICE_NOT_FOUND;
+            enteredUrl = s.toString();
+            lastTextChangedTimestamp = 0;
+            handler.removeCallbacks(serverRequestTask);
+            setPositiveButtonState(productNameValidated, urlValidated, price);
+
+            String urlValidatedLocallyStatus = validateUrlLocally(enteredUrl);
+            if (!urlValidatedLocallyStatus.equals(STATUS_URL_VALIDATED_LOCALLY)) {
+                displayInvalidUrl(urlValidatedLocallyStatus);
+            } else {
+                String knownStore = getKnownStoreForUrl(enteredUrl);
+                displayStoreFoundConnectionInProgress(knownStore);
+                handler.postDelayed(serverRequestTask, DELAY);
+                lastTextChangedTimestamp = System.currentTimeMillis();
+            }
+        }
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -123,78 +197,8 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
 
-        productNameEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                String enteredProductName = s.toString();
-                if (isProductNameValid(enteredProductName)) {
-                    productNameInputLayout.setError(null);
-                    productNameValidated = true;
-                    productName = enteredProductName;
-                } else {
-                    productNameInputLayout.setError(getString(R.string.error_invalid_productname_addproductdialog));
-                    productNameValidated = false;
-                }
-                setPositiveButtonState(productNameValidated, urlValidated, price);
-            }
-        });
-
-        urlEditText.addTextChangedListener(new TextWatcher() {
-            final int DELAY = 2000; //ms after user stops typing
-            long lastTextChangedTimestamp;
-            Handler handler = new Handler();
-
-            Runnable serverRequestTask = new Runnable() {
-                @Override
-                public void run() {
-                    if (System.currentTimeMillis() - lastTextChangedTimestamp >= DELAY) {
-                        validateUrlOnServer(enteredUrl);
-                    }
-                }
-            };
-
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                urlValidated = false;
-                price = StoreScraper.PRICE_NOT_FOUND;
-                enteredUrl = s.toString();
-                lastTextChangedTimestamp = 0;
-                handler.removeCallbacks(serverRequestTask);
-                setPositiveButtonState(productNameValidated, urlValidated, price);
-
-                String urlValidatedLocallyStatus = validateUrlLocally(enteredUrl);
-                if (!urlValidatedLocallyStatus.equals(STATUS_URL_VALIDATED_LOCALLY)) {
-                    displayInvalidUrl(urlValidatedLocallyStatus);
-                } else {
-                    String knownStore = getKnownStoreForUrl(enteredUrl);
-                    displayStoreFoundConnectionInProgress(knownStore);
-                    handler.postDelayed(serverRequestTask, DELAY);
-                    lastTextChangedTimestamp = System.currentTimeMillis();
-                }
-
-
-
-            }
-        });
+        productNameEditText.addTextChangedListener(new ProductNameTextWatcher());
+        urlEditText.addTextChangedListener(new UrlTextWatcher());
         return dialog;
     }
 
@@ -254,7 +258,7 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
         final String knownStoreForUrl = getKnownStoreForUrl(url);
 
         StoreScraperFactory storeScraperFactory = new StoreScraperFactory(getContext());
-        StoreScraper storeScraper = storeScraperFactory.getStoreScraper(knownStoreForUrl);
+        StoreScraper storeScraper = storeScraperFactory.getStoreScraperByStoreUrl(knownStoreForUrl);
 
         storeScraper.setStoreScraperListener(storeScraperListener);
 
@@ -309,12 +313,11 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
 
 
     private String getKnownStoreForUrl(String url) {
-        
-        ArrayList<String> knownStoreUrls = databaseHelper.getAllStoreUrls();
-        for (String knownStoreUrl : knownStoreUrls) {
-            if (url.contains(knownStoreUrl)) {
-                this.knownStoreUrl = knownStoreUrl;
-                return knownStoreUrl;
+        List<Store> knownStores = pricesRepository.getAllStores();
+        for (Store store : knownStores) {
+            if (url.contains(store.url)) {
+                knownStoreUrl = store.url;
+                return store.url;
             }
         }
         return null;

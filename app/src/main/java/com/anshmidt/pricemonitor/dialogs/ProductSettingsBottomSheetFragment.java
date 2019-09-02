@@ -11,9 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
+import com.anshmidt.pricemonitor.room.PricesRepository;
 
 import javax.inject.Inject;
 
@@ -29,7 +29,8 @@ public class ProductSettingsBottomSheetFragment extends BottomSheetDialogFragmen
 
     TextView deleteProductTextView;
     TextView addStoreTextView;
-    @Inject DatabaseHelper databaseHelper;
+    @Inject PricesRepository pricesRepository;
+//    @Inject DatabaseHelper databaseHelper;
 
     @Override
     public void onAttach(Context context) {
@@ -57,8 +58,6 @@ public class ProductSettingsBottomSheetFragment extends BottomSheetDialogFragmen
         deleteProductTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                databaseHelper.deleteAllItemsWithName(productName);
 
                 dismiss();
                 ProductSettingsBottomSheetListener productSettingsBottomSheetListener = (ProductSettingsBottomSheetListener) getActivity();

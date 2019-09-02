@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class DebugRandomScraper extends StoreScraper {
 
-    public static final String URL = "stackoverflow.com";
+    public static final String URL = "twentysix.ru";
     public static final String NAME = "debug random";
 
     public DebugRandomScraper(Context context) {

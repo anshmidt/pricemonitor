@@ -81,11 +81,11 @@ public class PricesRepository {
     }
 
     public int addProductIfNotExists(Product newProduct) {
-        Integer productId = productDao.getProductByName(newProduct.name).id;
-        if (productId == null) {
+        Product product = productDao.getProductByName(newProduct.name);
+        if (product == null) {
             return (int) productDao.insert(newProduct);
         } else {
-            return productId;
+            return product.id;
         }
     }
 
@@ -93,8 +93,16 @@ public class PricesRepository {
         storeDao.deleteAllStores();
     }
 
+    public List<Store> getAllStores() {
+        return storeDao.getAllStores();
+    }
+
     public Store getStoreByUrl(String storeUrl) {
         return storeDao.getStoreByUrl(storeUrl);
+    }
+
+    public List<Item> getAllItems() {
+        return itemDao.getAllItems();
     }
 
     public Product getProductByName(String productName) {
@@ -109,19 +117,55 @@ public class PricesRepository {
         return itemDao.getItemByUrl(itemUrl);
     }
 
+    public Item getItemById(int itemId) {
+        return itemDao.getItemById(itemId);
+    }
+
+    public Price getRecentPriceForItem(int itemId) {
+        return priceDao.getRecentPriceForItem(itemId);
+    }
+
+    public Product getProductByProductId(int productId) {
+        return productDao.getProductById(productId);
+    }
+
+    public Store getStoreByStoreId(int storeId) {
+        return storeDao.getStoreById(storeId);
+    }
+
+    public void deleteRecentPriceForEachItem() {
+        List<Item> items = getAllItems();
+        for (Item item : items) {
+            Price priceToDelete = priceDao.getRecentPriceForItem(item.id);
+            priceDao.delete(priceToDelete);
+        }
+    }
+
+    public void deleteProduct(String productName) {
+        productDao.deleteProductByName(productName);
+    }
+
+    public void deleteAllItemsForProductName(String productName) {
+        int productId = productDao.getProductByName(productName).id;
+        itemDao.deleteAllItemsWithProductId(productId);
+    }
+
+    public void deleteAllPricesForProductName(String productName) {
+        int productId = productDao.getProductByName(productName).id;
+        List<Item> items = itemDao.getItemsByProductId(productId);
+        for (Item item : items) {
+            priceDao.deleteAllPricesForItem(item.id);
+        }
+    }
+
+
     public void clearAllTables() {
-        try {
-            itemDao.deleteAllItems();
-        } catch (SQLiteException e) {}
-        try {
-            priceDao.deleteAllPrices();
-        } catch (SQLiteException e) {}
-        try {
-            productDao.deleteAllProducts();
-        } catch (SQLiteException e) {}
-        try {
-            storeDao.deleteAllStores();
-        } catch (SQLiteException e) {}
+        Log.d(LOG_TAG, "Clearing all tables");
+        storeDao.deleteAllStores();
+        productDao.deleteAllProducts();
+        priceDao.deleteAllPrices();
+        itemDao.deleteAllItems();
+        Log.d(LOG_TAG, "All tables cleared");
     }
 
     public void fillDbWithTestData() {

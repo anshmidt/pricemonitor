@@ -79,13 +79,11 @@ public abstract class StoreScraper {
         requestQueue.add(stringRequest);
 
         try {
-            final int MAX_RESPONSE_TIMEOUT = 30;
+            final int MAX_RESPONSE_TIMEOUT = 60;
             response = future.get(MAX_RESPONSE_TIMEOUT, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Log.d(LOG_TAG, e.toString());
-        } catch (ExecutionException e) {
-            Log.d(LOG_TAG, e.toString());
-        } catch (TimeoutException e) {
+            Log.d(LOG_TAG, "Received response from server for url: " + itemUrl);
+            Log.d(LOG_TAG, "Response: " + response.substring(0, 50));
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             Log.d(LOG_TAG, e.toString());
         }
 

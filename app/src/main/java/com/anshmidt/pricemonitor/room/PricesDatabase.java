@@ -15,7 +15,7 @@ import com.anshmidt.pricemonitor.room.entity.Price;
 import com.anshmidt.pricemonitor.room.entity.Product;
 import com.anshmidt.pricemonitor.room.entity.Store;
 
-@Database(entities = {Item.class, Price.class, Product.class, Store.class}, version = 1)
+@Database(entities = {Item.class, Price.class, Product.class, Store.class}, version = 2)
 public abstract class PricesDatabase extends RoomDatabase {
     private static volatile PricesDatabase INSTANCE;
 

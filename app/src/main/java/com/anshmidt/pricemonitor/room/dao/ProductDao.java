@@ -25,8 +25,17 @@ public interface ProductDao {
     @Query("SELECT id, name FROM products WHERE name = :productName")
     Product getProductByName(String productName);
 
+    @Query("SELECT id FROM products WHERE name = :productName")
+    int getProductIdByName(String productName);
+
+    @Query("SELECT id, name FROM products WHERE id = :productId")
+    Product getProductById(int productId);
+
     @Query("DELETE FROM products")
     void deleteAllProducts();
+
+    @Query("DELETE FROM products WHERE name = :productName")
+    void deleteProductByName(String productName);
 
 
 }

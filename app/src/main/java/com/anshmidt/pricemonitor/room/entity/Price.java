@@ -12,11 +12,14 @@ import com.anshmidt.pricemonitor.room.DateConverter;
 
 import java.util.Date;
 
+import static android.arch.persistence.room.ForeignKey.CASCADE;
+
 @Entity(tableName = Price.TABLE_NAME,
         foreignKeys = @ForeignKey(
                 entity = Item.class,
                 parentColumns = Item.KEY_ID,
-                childColumns = Price.KEY_ITEM_ID
+                childColumns = Price.KEY_ITEM_ID,
+                onDelete=CASCADE
         ),
         indices = @Index(Price.KEY_ITEM_ID)
 )

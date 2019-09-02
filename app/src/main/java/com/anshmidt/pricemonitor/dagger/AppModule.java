@@ -3,7 +3,6 @@ package com.anshmidt.pricemonitor.dagger;
 import android.content.Context;
 
 import com.anshmidt.pricemonitor.data.DataManager;
-import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.GraphPlotter;
 import com.anshmidt.pricemonitor.NotificationHelper;
 import com.anshmidt.pricemonitor.R;
@@ -29,11 +28,6 @@ public class AppModule {
         return context;
     }
 
-    @Provides
-    @Singleton
-    DatabaseHelper provideDatebaseHelper(Context context, DataManager dataManager) {
-        return new DatabaseHelper(context, dataManager);
-    }
 
     @Provides
     DataManager provideDataManager() {

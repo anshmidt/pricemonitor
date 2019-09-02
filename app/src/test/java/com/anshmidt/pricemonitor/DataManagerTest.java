@@ -3,7 +3,7 @@ package com.anshmidt.pricemonitor;
 import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.data.ItemData;
 import com.anshmidt.pricemonitor.data.ProductData;
-import com.anshmidt.pricemonitor.exceptions.EmptyDataException;
+import com.anshmidt.pricemonitor.data.EmptyDataException;
 import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.room.entity.Price;
 import com.anshmidt.pricemonitor.room.entity.Product;

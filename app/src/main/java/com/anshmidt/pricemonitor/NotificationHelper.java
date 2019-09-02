@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
 import com.anshmidt.pricemonitor.activities.MainActivity;
+import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 
 import javax.inject.Inject;
@@ -17,24 +18,22 @@ public class NotificationHelper {
 
     Context context;
 
+    @Inject
     public NotificationHelper(Context context) {
         this.context = context;
     }
 
-    public void showPriceDroppedNotificationIfNeeded(int itemId, int priceFromServer, DatabaseHelper databaseHelper) {
-        if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
+    public void showPriceDroppedNotificationIfNeeded(int currentPrice, int previousPrice, String productName, String storeName) {
+        if (currentPrice == StoreScraper.PRICE_NOT_FOUND) {
             return;
         }
 
-        int previousPriceFromDb = databaseHelper.getLastPrice(itemId);
-        if (hasPriceDroppedEnoughToShowNotification(priceFromServer, previousPriceFromDb)) {
-            String itemTitle = databaseHelper.getItemTitle(itemId);
-            String storeTitle = databaseHelper.getStoreTitle(itemId);
+        if (hasPriceDroppedEnoughToShowNotification(currentPrice, previousPrice)) {
             showPriceDroppedNotification(
-                    itemTitle,
-                    storeTitle,
-                    priceFromServer,
-                    previousPriceFromDb
+                    currentPrice,
+                    previousPrice,
+                    productName,
+                    storeName
             );
         }
     }
@@ -73,9 +72,9 @@ public class NotificationHelper {
         notificationManager.notify(notificationId, notificationBuilder.build());
     }
 
-    private void showPriceDroppedNotification(String itemTitle, String storeTitle, int priceFromServer, int previousPriceFromDb) {
-        String notificationTitle = itemTitle + " (" + storeTitle + ")";
-        String notificationText = context.getString(R.string.price_dropped_notification_text, priceFromServer, previousPriceFromDb);
+    private void showPriceDroppedNotification(int currentPrice, int previousPrice, String productName, String storeName) {
+        String notificationTitle = productName + " (" + storeName + ")";
+        String notificationText = context.getString(R.string.price_dropped_notification_text, currentPrice, previousPrice);
         showNotification(notificationTitle, notificationText);
     }
 

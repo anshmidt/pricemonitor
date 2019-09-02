@@ -2,6 +2,8 @@ package com.anshmidt.pricemonitor.scrapers;
 
 import android.content.Context;
 
+import com.anshmidt.pricemonitor.room.entity.Store;
+
 public class StoreScraperFactory {
 
     Context context;
@@ -9,7 +11,7 @@ public class StoreScraperFactory {
         this.context = context;
     }
 
-    public StoreScraper getStoreScraper(String storeUrl) {
+    public StoreScraper getStoreScraperByStoreUrl(String storeUrl) {
         if (storeUrl == null) {
             return null;
         }
@@ -34,4 +36,8 @@ public class StoreScraperFactory {
         throw new RuntimeException("Invalid store url: " + storeUrl);
     }
 
+    public StoreScraper getStoreScraperByItemUrl(String itemUrl) {
+        String storeUrl = Store.extractStoreUrl(itemUrl);
+        return getStoreScraperByStoreUrl(storeUrl);
+    }
 }

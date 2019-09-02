@@ -13,13 +13,14 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.anshmidt.pricemonitor.data.DataManager;
-import com.anshmidt.pricemonitor.DatabaseHelper;
 import com.anshmidt.pricemonitor.GraphPlotter;
 import com.anshmidt.pricemonitor.ProductsListAdapter;
 import com.anshmidt.pricemonitor.NotificationHelper;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
+import com.anshmidt.pricemonitor.dialogs.ProductSettingsBottomSheetFragment;
 import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.R;
 import com.anshmidt.pricemonitor.ServerRequestsWorker;
@@ -47,22 +48,18 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-public class MainActivity extends AppCompatActivity implements AddProductDialogFragment.AddProductDialogListener {
+public class MainActivity extends AppCompatActivity implements
+        AddProductDialogFragment.AddProductDialogListener,
+        ProductSettingsBottomSheetFragment.ProductSettingsBottomSheetListener {
 
-
-    Toolbar toolbar;
-
-    @Inject
-    DatabaseHelper databaseHelper;
-
-    @Inject PricesRepository pricesRepository;
-
-    @Inject DataManager dataManager;
-    ProductsListAdapter productsListAdapter;
-    @Inject GraphPlotter graphPlotter;
     FloatingActionButton addItemButton;
     final String LOG_TAG = MainActivity.class.getSimpleName();
-    final int INTERVAL_BETWEEN_SERVER_REQUESTS = 30;
+    final int INTERVAL_BETWEEN_SERVER_REQUESTS_MINUTES = 15; //it cannot be < 15 according to WorkManager spec
+
+    @Inject ProductsListAdapter productsListAdapter;
+    @Inject PricesRepository pricesRepository;
+    @Inject DataManager dataManager;
+    @Inject GraphPlotter graphPlotter;
     @Inject int[] storesColors;
     @Inject NotificationHelper notificationHelper;
     @Inject StoreColorAssigner storeColorAssigner;
@@ -75,24 +72,17 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
 
         PriceMonitorApplication.getComponent().inject(this);
 
-        //temp
-//        databaseHelper.dropDb();
-        Log.d(LOG_TAG, "activity----");
-//        pricesRepository.clearAllTables();
-//        pricesRepository.addStoresIfNotPresent();
-//        pricesRepository.fillDbWithTestData();
+        pricesRepository.addStoresIfNotPresent();
         pricesRepository.printDatabaseToLog();
 
-
-//        databaseHelper.printDbToLog();
 
         RecyclerView recyclerView = findViewById(R.id.items_recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        productsListAdapter = new ProductsListAdapter(MainActivity.this, pricesRepository.getAllProductData(), dataManager, graphPlotter, storeColorAssigner);
+        productsListAdapter.productDataList = pricesRepository.getAllProductData();
         recyclerView.setAdapter(productsListAdapter);
 
-//        sendPeriodicServerRequests();
+        sendPeriodicServerRequests();
 
         addItemButton = (FloatingActionButton) findViewById(R.id.add_item_button);
         addItemButton.setOnClickListener(new View.OnClickListener() {
@@ -124,7 +114,6 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
     protected void onResume() {
         super.onResume();
         productsListAdapter.productDataList = pricesRepository.getAllProductData();
-//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
         productsListAdapter.notifyDataSetChanged();
     }
 
@@ -140,26 +129,28 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
 
         switch (id) {
             case R.id.clear_db_menu_item: {
-//                databaseHelper.clearPricesAndItems();
-//                recreate();
+                pricesRepository.clearAllTables();
+                pricesRepository.printDatabaseToLog();
+                recreate();
                 break;
             }
             case R.id.action_refresh: {
-//                sendOneTimeServerRequests();
+                sendOneTimeServerRequests();
                 break;
             }
             case R.id.fill_db_menu_item: {
-//                databaseHelper.fillDbWithTestData();
-//                recreate();
+                pricesRepository.fillDbWithTestData();
+                recreate();
                 break;
             }
             case R.id.delete_recent_price_menu_item: {
-//                databaseHelper.deleteLastPriceForEachItem();
-//                recreate();
+                pricesRepository.deleteRecentPriceForEachItem();
+                recreate();
                 break;
             }
             case R.id.stop_requests_menu_item: {
-//                WorkManager.getInstance().cancelAllWork();
+                WorkManager.getInstance().cancelAllWork();
+                Toast.makeText(MainActivity.this, "Requests stopped", Toast.LENGTH_SHORT).show();
                 break;
             }
 
@@ -185,24 +176,26 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
         productsListAdapter.productDataList = dataManager.addItem(newItem, store, productsListAdapter.productDataList);
         productsListAdapter.productDataList = dataManager.addPrice(newPrice, newItem, productsListAdapter.productDataList);
 
-//        int itemId = databaseHelper.addItemIfNotExists(productName, itemUrl);
-//        long timestamp = System.currentTimeMillis();
-//        databaseHelper.addPrice(itemId, price, timestamp);
-//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
+
         productsListAdapter.notifyDataSetChanged();
     }
 
-    public void onItemDeleted(int itemId) {
-        //TODO
-//        productsListAdapter.products = databaseHelper.getAllProducts(storesColors);
-//        productsListAdapter.notifyDataSetChanged();
+    public void onProductDeleted(String productName) {
+        pricesRepository.deleteAllPricesForProductName(productName);
+        pricesRepository.deleteAllItemsForProductName(productName);
+        pricesRepository.deleteProduct(productName);
+
+        productsListAdapter.productDataList = pricesRepository.getAllProductData();
+        productsListAdapter.notifyDataSetChanged();
     }
 
     public void sendPeriodicServerRequests() {
-        ArrayList<Integer> itemsIdList = databaseHelper.getAllItemsIdList();
-        for (final int itemId : itemsIdList) {
+        List<Item> items = pricesRepository.getAllItems();
+        for (Item item : items) {
+            Log.d(LOG_TAG, "Scheduling periodic requests for item: " + item);
             Data inputData = new Data.Builder()
-                    .putInt(ServerRequestsWorker.KEY_ITEM_ID, itemId)
+                    .putInt(ServerRequestsWorker.KEY_ITEM_ID, item.id)
+                    .putString(ServerRequestsWorker.KEY_ITEM_URL, item.url)
                     .build();
             Constraints periodicWorkerConstraints = new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -210,14 +203,13 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
             PeriodicWorkRequest serverScraperWorkRequest =
                     new PeriodicWorkRequest.Builder(
                             ServerRequestsWorker.class,
-                            INTERVAL_BETWEEN_SERVER_REQUESTS, TimeUnit.MINUTES)
+                            INTERVAL_BETWEEN_SERVER_REQUESTS_MINUTES, TimeUnit.MINUTES)
                             .setInputData(inputData)
                             .setConstraints(periodicWorkerConstraints)
                             .build();
 
-            String uniqueWorkTag = String.valueOf(itemId);
+            String uniqueWorkTag = String.valueOf(item.id);
             WorkManager.getInstance().enqueueUniquePeriodicWork(uniqueWorkTag, ExistingPeriodicWorkPolicy.REPLACE, serverScraperWorkRequest);
-
 
             WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(uniqueWorkTag)
                     .observe(this, new Observer<List<WorkInfo>>() {
@@ -230,8 +222,11 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
 
                             for (WorkInfo workInfo : workInfos) {
                                 //receiving back the data
-                                Log.d(LOG_TAG, "result of PeriodicWorkRequest received for itemID="+itemId + ". Status: " + workInfo.getState());
-                                //products list doesn't get updated on each result. It is updated only onResume
+                                Log.d(LOG_TAG, "Result of PeriodicWorkRequest received. Status: " + workInfo.getState());
+                                int itemId = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_ITEM_ID, Item.ID_NOT_FOUND);
+                                int price = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_PRICE, StoreScraper.PRICE_NOT_FOUND);
+                                Log.d(LOG_TAG, "Result of PeriodicWorkRequest: itemId: "+itemId + ", price: " + price);
+                                onPeriodicResponseFromServer(price, itemId);
                             }
                         }
                     });
@@ -240,10 +235,11 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
 
 
     public void sendOneTimeServerRequests() {
-        ArrayList<Integer> itemsIdList = databaseHelper.getAllItemsIdList();
-        for (int itemId : itemsIdList) {
+        List<Item> items = pricesRepository.getAllItems();
+        for (Item item : items) {
             Data inputData = new Data.Builder()
-                    .putInt(ServerRequestsWorker.KEY_ITEM_ID, itemId)
+                    .putInt(ServerRequestsWorker.KEY_ITEM_ID, item.id)
+                    .putString(ServerRequestsWorker.KEY_ITEM_URL, item.url)
                     .build();
             OneTimeWorkRequest serverScraperWorkRequest =
                     new OneTimeWorkRequest.Builder(ServerRequestsWorker.class)
@@ -257,30 +253,66 @@ public class MainActivity extends AppCompatActivity implements AddProductDialogF
                         public void onChanged(@Nullable WorkInfo workInfo) {
                             //receiving back the data
                             if (workInfo != null && workInfo.getState().isFinished()) {
-                                Log.d(LOG_TAG, "result of OnetimeWorkRequest received");
-                                String itemUrl = workInfo.getOutputData().getString(ServerRequestsWorker.KEY_ITEM_URL);
+                                Log.d(LOG_TAG, "Result of OnetimeWorkRequest received");
+                                int itemId = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_ITEM_ID, Item.ID_NOT_FOUND);
                                 int price = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_PRICE, StoreScraper.PRICE_NOT_FOUND);
-                                onOneTimeResponseFromServer(price, itemUrl);
+                                onOneTimeResponseFromServer(price, itemId);
                             }
                         }
                     });
         }
     }
 
-    public void onOneTimeResponseFromServer(int priceFromServer, String itemUrl) {
+    public void onOneTimeResponseFromServer(int priceFromServer, int itemId) {
         if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
+            Log.d(LOG_TAG, "Item " + itemId+ ": invalid price received: " + priceFromServer);
             return;
         }
 
-        Item item = pricesRepository.getItemByUrl(itemUrl);
-        notificationHelper.showPriceDroppedNotificationIfNeeded(item.id, priceFromServer, databaseHelper);
+        Item item = pricesRepository.getItemById(itemId);
+
+        int recentPriceFromDb = pricesRepository.getRecentPriceForItem(itemId).price;
+        String productName = pricesRepository.getProductByProductId(item.productId).name;
+        String storeName = pricesRepository.getStoreByStoreId(item.storeId).name;
+
+        notificationHelper.showPriceDroppedNotificationIfNeeded(
+                priceFromServer,
+                recentPriceFromDb,
+                productName,
+                storeName
+        );
 
         Date currentDate = new Date(System.currentTimeMillis());
         int priceId = pricesRepository.addPrice(new Price(currentDate, item.id, priceFromServer));
-        Price newPrice = new Price(priceId, currentDate, item.id, priceFromServer);
 
+        Price newPrice = new Price(priceId, currentDate, item.id, priceFromServer);
         productsListAdapter.productDataList = dataManager.addPrice(newPrice, item, productsListAdapter.productDataList);
         productsListAdapter.notifyDataSetChanged();
+    }
+
+    public void onPeriodicResponseFromServer(int priceFromServer, int itemId) {
+        if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
+            Log.d(LOG_TAG, "Item " + itemId+ ": invalid price received: " + priceFromServer);
+            return;
+        }
+
+        Item item = pricesRepository.getItemById(itemId);
+
+        int recentPriceFromDb = pricesRepository.getRecentPriceForItem(itemId).price;
+        String productName = pricesRepository.getProductByProductId(item.productId).name;
+        String storeName = pricesRepository.getStoreByStoreId(item.storeId).name;
+
+        notificationHelper.showPriceDroppedNotificationIfNeeded(
+                priceFromServer,
+                recentPriceFromDb,
+                productName,
+                storeName
+        );
+
+        Date currentDate = new Date(System.currentTimeMillis());
+        int priceId = pricesRepository.addPrice(new Price(currentDate, item.id, priceFromServer));
+
+        //products list doesn't get updated on each result. It is updated only onResume
     }
 
 

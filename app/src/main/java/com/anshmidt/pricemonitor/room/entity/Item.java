@@ -9,17 +9,21 @@ import android.arch.persistence.room.PrimaryKey;
 
 import java.util.List;
 
+import static android.arch.persistence.room.ForeignKey.CASCADE;
+
 @Entity(tableName = Item.TABLE_NAME,
         foreignKeys = {
                 @ForeignKey(
                         entity = Product.class,
                         parentColumns = Product.KEY_ID,
-                        childColumns = Item.KEY_PRODUCT_ID
+                        childColumns = Item.KEY_PRODUCT_ID,
+                        onDelete=CASCADE
                 ),
                 @ForeignKey(
                         entity = Store.class,
                         parentColumns = Store.KEY_ID,
-                        childColumns = Item.KEY_STORE_ID
+                        childColumns = Item.KEY_STORE_ID,
+                        onDelete=CASCADE
                 ),
         },
         indices = {
@@ -34,6 +38,8 @@ public class Item {
     public static final String KEY_URL = "url";
     public static final String KEY_STORE_ID = "store_id";
     public static final String KEY_PRODUCT_ID = "product_id";
+
+    public static final int ID_NOT_FOUND = -1;
 
     @ColumnInfo(name = KEY_ID)
     @PrimaryKey(autoGenerate = true)
