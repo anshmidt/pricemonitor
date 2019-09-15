@@ -1,8 +1,9 @@
 package com.anshmidt.pricemonitor.room;
 
-import android.arch.persistence.room.TypeConverter;
 
 import java.util.Date;
+
+import androidx.room.TypeConverter;
 
 public class DateConverter {
     @TypeConverter

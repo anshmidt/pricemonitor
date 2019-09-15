@@ -1,14 +1,14 @@
 package com.anshmidt.pricemonitor.room.dao;
 
-import android.arch.persistence.room.Dao;
-import android.arch.persistence.room.Delete;
-import android.arch.persistence.room.Insert;
-import android.arch.persistence.room.Query;
 
 import com.anshmidt.pricemonitor.room.entity.Price;
 
 import java.util.List;
 
+import androidx.room.Dao;
+import androidx.room.Delete;
+import androidx.room.Insert;
+import androidx.room.Query;
 import io.reactivex.Flowable;
 
 @Dao
@@ -24,7 +24,10 @@ public interface PriceDao {
     List<Price> getAllPricesForItem(int itemId);
 
     @Query("SELECT MAX(date), * FROM prices WHERE item_id = :itemId")
-    Price getRecentPriceForItem(int itemId);
+    Price getLatestPriceForItem(int itemId);
+
+    @Query("SELECT * FROM prices WHERE item_id = :itemId ORDER BY item_id LIMIT 1 OFFSET 1")
+    Price getPreviousPriceForItem(int itemId);
 
     @Query("DELETE FROM prices WHERE item_id = :itemId")
     void deleteAllPricesForItem(int itemId);

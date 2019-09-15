@@ -3,8 +3,6 @@ package com.anshmidt.pricemonitor;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +19,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreListAdapter.ViewHolder> {
 
@@ -64,13 +65,13 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
 
         ItemData itemData = productData.itemDataList.get(i);
-        Optional<Integer> itemCurrentPrice = dataManager.getRecentPriceValue(itemData);
+        Optional<Integer> itemCurrentPrice = dataManager.getLatestPriceValue(itemData);
         if (!itemCurrentPrice.isPresent()) {
             return;
         }
         String storeName = itemData.store.name;
-        Optional<Date> recentDate = dataManager.getRecentDate(itemData);
-        if (!recentDate.isPresent()) {
+        Optional<Date> latestDate = dataManager.getLatestDate(itemData);
+        if (!latestDate.isPresent()) {
             return;
         }
 
@@ -80,7 +81,7 @@ public class PriceInStoreListAdapter extends RecyclerView.Adapter<PriceInStoreLi
         viewHolder.priceTextView.setText(String.format(Locale.getDefault(), "%,d", itemCurrentPrice.get()));
 
         viewHolder.storeNameTextView.setText(storeName);
-        displayDate(viewHolder.dateTextView, recentDate.get());
+        displayDate(viewHolder.dateTextView, latestDate.get());
         displayStoreIcon(viewHolder.storeIcon, storeName, storeColor);
 
         viewHolder.gotoUrlImageButton.setOnClickListener(new View.OnClickListener() {

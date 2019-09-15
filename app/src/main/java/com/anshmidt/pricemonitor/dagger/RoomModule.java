@@ -1,7 +1,6 @@
 package com.anshmidt.pricemonitor.dagger;
 
 import android.app.Application;
-import android.arch.persistence.room.Room;
 import android.content.Context;
 
 import com.anshmidt.pricemonitor.room.PricesDatabase;
@@ -12,6 +11,7 @@ import com.anshmidt.pricemonitor.room.dao.StoreDao;
 
 import javax.inject.Singleton;
 
+import androidx.room.Room;
 import dagger.Module;
 import dagger.Provides;
 

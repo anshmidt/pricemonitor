@@ -26,9 +26,9 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/delete_recent_price_menu_item"
+        android:id="@+id/delete_latest_price_menu_item"
         android:orderInCategory="102"
-        android:title="@string/delete_recent_price_menu_item"
+        android:title="@string/delete_latest_price_menu_item"
         app:showAsAction="never"/>
 
     <item

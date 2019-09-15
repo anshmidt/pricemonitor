@@ -1,14 +1,8 @@
 package com.anshmidt.pricemonitor.activities;
 
 import android.app.FragmentManager;
-import android.arch.lifecycle.Observer;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,14 +25,19 @@ import com.anshmidt.pricemonitor.room.entity.Price;
 import com.anshmidt.pricemonitor.room.entity.Product;
 import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
@@ -55,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements
     FloatingActionButton addItemButton;
     final String LOG_TAG = MainActivity.class.getSimpleName();
     final int INTERVAL_BETWEEN_SERVER_REQUESTS_MINUTES = 15; //it cannot be < 15 according to WorkManager spec
+    protected static boolean isVisible = false;
 
     @Inject ProductsListAdapter productsListAdapter;
     @Inject PricesRepository pricesRepository;
@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity implements
     @Inject int[] storesColors;
     @Inject NotificationHelper notificationHelper;
     @Inject StoreColorAssigner storeColorAssigner;
+
+
 
 
     @Override
@@ -82,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements
         productsListAdapter.productDataList = pricesRepository.getAllProductData();
         recyclerView.setAdapter(productsListAdapter);
 
-        sendPeriodicServerRequests();
+        schedulePeriodicRequests();
 
         addItemButton = (FloatingActionButton) findViewById(R.id.add_item_button);
         addItemButton.setOnClickListener(new View.OnClickListener() {
@@ -113,8 +115,15 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        isVisible = true;
         productsListAdapter.productDataList = pricesRepository.getAllProductData();
         productsListAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isVisible = false;
     }
 
     @Override
@@ -124,39 +133,48 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        int id = menuItem.getItemId();
 
         switch (id) {
+            case R.id.action_refresh: {
+                scheduleOneTimeRequests();
+                break;
+            }
+            // option for debug purposes
             case R.id.clear_db_menu_item: {
                 pricesRepository.clearAllTables();
                 pricesRepository.printDatabaseToLog();
                 recreate();
                 break;
             }
-            case R.id.action_refresh: {
-                sendOneTimeServerRequests();
-                break;
-            }
+            // option for debug purposes
             case R.id.fill_db_menu_item: {
                 pricesRepository.fillDbWithTestData();
                 recreate();
                 break;
             }
-            case R.id.delete_recent_price_menu_item: {
-                pricesRepository.deleteRecentPriceForEachItem();
+            // option for debug purposes
+            case R.id.delete_latest_price_menu_item: {
+                pricesRepository.deleteLatestPriceForEachItem();
                 recreate();
                 break;
             }
+            // option for debug purposes
             case R.id.stop_requests_menu_item: {
-                WorkManager.getInstance().cancelAllWork();
+                WorkManager.getInstance(MainActivity.this).cancelAllWork();
+//                List<Item> items = pricesRepository.getAllItems();
+//                for (Item item : items) {
+//                    String workerTag = String.valueOf(item.id);
+//                    WorkManager.getInstance().cancelUniqueWork(workerTag);
+//                }
                 Toast.makeText(MainActivity.this, "Requests stopped", Toast.LENGTH_SHORT).show();
                 break;
             }
 
         }
 
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(menuItem);
     }
 
     @Override
@@ -189,17 +207,20 @@ public class MainActivity extends AppCompatActivity implements
         productsListAdapter.notifyDataSetChanged();
     }
 
-    public void sendPeriodicServerRequests() {
+    public void schedulePeriodicRequests() {
         List<Item> items = pricesRepository.getAllItems();
+        WorkManager workManager = WorkManager.getInstance(MainActivity.this);
+        final Constraints periodicWorkerConstraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
         for (Item item : items) {
-            Log.d(LOG_TAG, "Scheduling periodic requests for item: " + item);
             Data inputData = new Data.Builder()
                     .putInt(ServerRequestsWorker.KEY_ITEM_ID, item.id)
                     .putString(ServerRequestsWorker.KEY_ITEM_URL, item.url)
                     .build();
-            Constraints periodicWorkerConstraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
+
+            String uniqueWorkName = String.valueOf(item.id);
+
             PeriodicWorkRequest serverScraperWorkRequest =
                     new PeriodicWorkRequest.Builder(
                             ServerRequestsWorker.class,
@@ -208,33 +229,25 @@ public class MainActivity extends AppCompatActivity implements
                             .setConstraints(periodicWorkerConstraints)
                             .build();
 
-            String uniqueWorkTag = String.valueOf(item.id);
-            WorkManager.getInstance().enqueueUniquePeriodicWork(uniqueWorkTag, ExistingPeriodicWorkPolicy.REPLACE, serverScraperWorkRequest);
+            workManager.enqueueUniquePeriodicWork(uniqueWorkName, ExistingPeriodicWorkPolicy.REPLACE, serverScraperWorkRequest);
 
-            WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(uniqueWorkTag)
-                    .observe(this, new Observer<List<WorkInfo>>() {
-                        @Override
-                        public void onChanged(@Nullable List<WorkInfo> workInfos) {
-                            if (workInfos == null) {
-                                Log.d(LOG_TAG, "workinfo is null");
-                                return;
-                            }
 
-                            for (WorkInfo workInfo : workInfos) {
-                                //receiving back the data
-                                Log.d(LOG_TAG, "Result of PeriodicWorkRequest received. Status: " + workInfo.getState());
-                                int itemId = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_ITEM_ID, Item.ID_NOT_FOUND);
-                                int price = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_PRICE, StoreScraper.PRICE_NOT_FOUND);
-                                Log.d(LOG_TAG, "Result of PeriodicWorkRequest: itemId: "+itemId + ", price: " + price);
-                                onPeriodicResponseFromServer(price, itemId);
+            workManager.getWorkInfosForUniqueWorkLiveData(uniqueWorkName)
+                    .observe(this, workInfos -> {
+                        for (WorkInfo workInfo : workInfos) {
+                            if (workInfo != null && workInfo.getState() == WorkInfo.State.ENQUEUED) {
+                                Log.d(LOG_TAG, "Result of PeriodicWorkRequest received");
+                                Price priceFromServer = pricesRepository.getLatestPriceForItem(item.id);
+                                onResponseFromServer(priceFromServer, item.id);
                             }
                         }
                     });
         }
+
     }
 
 
-    public void sendOneTimeServerRequests() {
+    public void scheduleOneTimeRequests() {
         List<Item> items = pricesRepository.getAllItems();
         for (Item item : items) {
             Data inputData = new Data.Builder()
@@ -245,74 +258,35 @@ public class MainActivity extends AppCompatActivity implements
                     new OneTimeWorkRequest.Builder(ServerRequestsWorker.class)
                             .setInputData(inputData)
                             .build();
-            WorkManager.getInstance().enqueue(serverScraperWorkRequest);
+            WorkManager.getInstance(MainActivity.this).enqueue(serverScraperWorkRequest);
 
-            WorkManager.getInstance().getWorkInfoByIdLiveData(serverScraperWorkRequest.getId())
-                    .observe(this, new Observer<WorkInfo>() {
-                        @Override
-                        public void onChanged(@Nullable WorkInfo workInfo) {
-                            //receiving back the data
-                            if (workInfo != null && workInfo.getState().isFinished()) {
-                                Log.d(LOG_TAG, "Result of OnetimeWorkRequest received");
-                                int itemId = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_ITEM_ID, Item.ID_NOT_FOUND);
-                                int price = workInfo.getOutputData().getInt(ServerRequestsWorker.KEY_PRICE, StoreScraper.PRICE_NOT_FOUND);
-                                onOneTimeResponseFromServer(price, itemId);
-                            }
+            WorkManager.getInstance(MainActivity.this).getWorkInfoByIdLiveData(serverScraperWorkRequest.getId())
+                    .observe(this, workInfo -> {
+                        if (workInfo != null && workInfo.getState().isFinished()) {
+                            Log.d(LOG_TAG, "Result of OnetimeWorkRequest received");
+                            Price priceFromServer = pricesRepository.getLatestPriceForItem(item.id);
+                            onResponseFromServer(priceFromServer, item.id);
                         }
                     });
         }
     }
 
-    public void onOneTimeResponseFromServer(int priceFromServer, int itemId) {
-        if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
-            Log.d(LOG_TAG, "Item " + itemId+ ": invalid price received: " + priceFromServer);
+
+
+    public void onResponseFromServer(Price latestPrice, int itemId) {
+        if (latestPrice.price == StoreScraper.PRICE_NOT_FOUND) {
+            Log.d(LOG_TAG, "Item " + itemId+ ": invalid price received: " + latestPrice);
             return;
         }
 
-        Item item = pricesRepository.getItemById(itemId);
 
-        int recentPriceFromDb = pricesRepository.getRecentPriceForItem(itemId).price;
-        String productName = pricesRepository.getProductByProductId(item.productId).name;
-        String storeName = pricesRepository.getStoreByStoreId(item.storeId).name;
-
-        notificationHelper.showPriceDroppedNotificationIfNeeded(
-                priceFromServer,
-                recentPriceFromDb,
-                productName,
-                storeName
-        );
-
-        Date currentDate = new Date(System.currentTimeMillis());
-        int priceId = pricesRepository.addPrice(new Price(currentDate, item.id, priceFromServer));
-
-        Price newPrice = new Price(priceId, currentDate, item.id, priceFromServer);
-        productsListAdapter.productDataList = dataManager.addPrice(newPrice, item, productsListAdapter.productDataList);
-        productsListAdapter.notifyDataSetChanged();
-    }
-
-    public void onPeriodicResponseFromServer(int priceFromServer, int itemId) {
-        if (priceFromServer == StoreScraper.PRICE_NOT_FOUND) {
-            Log.d(LOG_TAG, "Item " + itemId+ ": invalid price received: " + priceFromServer);
-            return;
+        // add price to graph if activity is visible
+        if (isVisible) {
+            Item item = pricesRepository.getItemById(itemId);
+            productsListAdapter.productDataList = dataManager.addPrice(latestPrice, item, productsListAdapter.productDataList);
+            productsListAdapter.notifyDataSetChanged();
         }
 
-        Item item = pricesRepository.getItemById(itemId);
-
-        int recentPriceFromDb = pricesRepository.getRecentPriceForItem(itemId).price;
-        String productName = pricesRepository.getProductByProductId(item.productId).name;
-        String storeName = pricesRepository.getStoreByStoreId(item.storeId).name;
-
-        notificationHelper.showPriceDroppedNotificationIfNeeded(
-                priceFromServer,
-                recentPriceFromDb,
-                productName,
-                storeName
-        );
-
-        Date currentDate = new Date(System.currentTimeMillis());
-        int priceId = pricesRepository.addPrice(new Price(currentDate, item.id, priceFromServer));
-
-        //products list doesn't get updated on each result. It is updated only onResume
     }
 
 

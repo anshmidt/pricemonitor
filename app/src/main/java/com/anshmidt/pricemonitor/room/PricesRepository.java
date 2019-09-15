@@ -121,8 +121,12 @@ public class PricesRepository {
         return itemDao.getItemById(itemId);
     }
 
-    public Price getRecentPriceForItem(int itemId) {
-        return priceDao.getRecentPriceForItem(itemId);
+    public Price getLatestPriceForItem(int itemId) {
+        return priceDao.getLatestPriceForItem(itemId);
+    }
+
+    public Price getPreviousPriceForItem(int itemId) {
+        return priceDao.getPreviousPriceForItem(itemId);
     }
 
     public Product getProductByProductId(int productId) {
@@ -133,10 +137,10 @@ public class PricesRepository {
         return storeDao.getStoreById(storeId);
     }
 
-    public void deleteRecentPriceForEachItem() {
+    public void deleteLatestPriceForEachItem() {
         List<Item> items = getAllItems();
         for (Item item : items) {
-            Price priceToDelete = priceDao.getRecentPriceForItem(item.id);
+            Price priceToDelete = priceDao.getLatestPriceForItem(item.id);
             priceDao.delete(priceToDelete);
         }
     }
@@ -169,26 +173,22 @@ public class PricesRepository {
     }
 
     public void fillDbWithTestData() {
+        addTestProductSmartphone();
+        addTestProductWithRandomPrice();
+    }
+
+    private void addTestProductSmartphone() {
         final String PHONE_PRODUCT_NAME = "LG G7";
         int phoneProductId = (int) productDao.insert(new Product(PHONE_PRODUCT_NAME));
-        Product phoneProduct = new Product(phoneProductId, PHONE_PRODUCT_NAME);
 
         int yandexMarketStoreId = storeDao.getStoreIdByUrl(YandexMarketMinScraper.URL);
-        final String PHONE_ON_YANDEX_MARKET_URL = "https://market.yandex.ru/product--smartfon-lg-g7-thinq-64gb/41449031";
+        final String PHONE_ON_YANDEX_MARKET_URL = "https://"+YandexMarketMinScraper.URL+"/product--smartfon-lg-g7-thinq-64gb/41449031";
         int phoneOnYandexMarketItemId = (int) itemDao.insert(new Item(
                 PHONE_ON_YANDEX_MARKET_URL,
                 phoneProductId,
                 yandexMarketStoreId
         ));
 
-        Item phoneOnYandexMarketItem = new Item(
-                phoneOnYandexMarketItemId,
-                PHONE_ON_YANDEX_MARKET_URL,
-                phoneProductId,
-                yandexMarketStoreId
-        );
-
-        Store yandexMarketStore = new Store(YandexMarketMinScraper.NAME, YandexMarketMinScraper.URL);
 
         Date todayDate = new Date(System.currentTimeMillis());
         Date yesterdayDate = new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1));
@@ -197,6 +197,28 @@ public class PricesRepository {
 
         priceDao.insert(new Price(yesterdayDate, phoneOnYandexMarketItemId, yesterdayPriceValue));
         priceDao.insert(new Price(todayDate, phoneOnYandexMarketItemId, todayPriceValue));
+    }
+
+    private void addTestProductWithRandomPrice() {
+        final String PHONE_PRODUCT_NAME = "Random price product";
+        int productId = (int) productDao.insert(new Product(PHONE_PRODUCT_NAME));
+
+        int storeId = storeDao.getStoreIdByUrl(DebugRandomScraper.URL);
+        final String ITEM_URL = "https://"+DebugRandomScraper.URL;
+        int itemId = (int) itemDao.insert(new Item(
+                ITEM_URL,
+                productId,
+                storeId
+        ));
+
+
+        Date todayDate = new Date(System.currentTimeMillis());
+        Date weekAgoDate = new Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
+        int todayPriceValue = 20000;
+        int weekAgoPriceValue = 50000;
+
+        priceDao.insert(new Price(weekAgoDate, itemId, weekAgoPriceValue));
+        priceDao.insert(new Price(todayDate, itemId, todayPriceValue));
     }
 
 //    public List<Price> getPricesForItem(int itemId) {

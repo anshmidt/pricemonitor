@@ -23,24 +23,24 @@ public class DataManager {
         PRICE_COMPARATOR = (a, b) -> ((Integer)a.price).compareTo((Integer) b.price);
     }
 
-    public Optional<Integer> getRecentPriceValue(ItemData itemData) {
+    public Optional<Integer> getLatestPriceValue(ItemData itemData) {
         if (isEmpty(itemData)) {
             return Optional.empty();
         }
         List<Price> allItemPrices = itemData.prices;
         Collections.sort(allItemPrices, PRICE_BY_DATE_COMPARATOR);
-        Price recentPrice = allItemPrices.get(allItemPrices.size() - 1);
-        return Optional.of(recentPrice.price);
+        Price latestPrice = allItemPrices.get(allItemPrices.size() - 1);
+        return Optional.of(latestPrice.price);
     }
 
-    public Optional<Date> getRecentDate(ItemData itemData) {
+    public Optional<Date> getLatestDate(ItemData itemData) {
         if (isEmpty(itemData)) {
             return Optional.empty();
         }
         List<Price> allItemPrices = itemData.prices;
         Collections.sort(allItemPrices, PRICE_BY_DATE_COMPARATOR);
-        Price recentPrice = allItemPrices.get(allItemPrices.size() - 1);
-        return Optional.of(recentPrice.date);
+        Price latestPrice = allItemPrices.get(allItemPrices.size() - 1);
+        return Optional.of(latestPrice.date);
     }
 
 

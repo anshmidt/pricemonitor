@@ -4,8 +4,6 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetDialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +12,11 @@ import android.widget.TextView;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
 import com.anshmidt.pricemonitor.room.PricesRepository;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import javax.inject.Inject;
+
+import androidx.annotation.Nullable;
 
 public class ProductSettingsBottomSheetFragment extends BottomSheetDialogFragment {
 

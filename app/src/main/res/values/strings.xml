@@ -4,12 +4,12 @@
     <string name="settings_menu_item">Settings</string>
     <string name="clear_db_menu_item">Clear DB</string>
     <string name="fill_db_menu_item">Fill DB</string>
-    <string name="delete_recent_price_menu_item">Delete recent price</string>
+    <string name="delete_latest_price_menu_item">Delete latest price</string>
     <string name="stop_requests_menu_item">Stop background requests</string>
 
     <string name="no_data_to_display_message">No data to display</string>
     <string name="price_unknown_message">Unknown</string>
-    <string name="current_price_label">Most recent price:</string>
+    <string name="current_price_label">Most latest price:</string>
 
     <string name="notifications_item_bottomsheet">Notifications</string>
     <string name="goto_item_bottomsheet">Open webpage</string>

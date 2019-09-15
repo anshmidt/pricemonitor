@@ -6,13 +6,14 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
 
 import com.anshmidt.pricemonitor.activities.MainActivity;
 import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 
 import javax.inject.Inject;
+
+import androidx.core.app.NotificationCompat;
 
 public class NotificationHelper {
 
@@ -28,14 +29,15 @@ public class NotificationHelper {
             return;
         }
 
-        if (hasPriceDroppedEnoughToShowNotification(currentPrice, previousPrice)) {
+        //TODO temp
+//        if (hasPriceDroppedEnoughToShowNotification(currentPrice, previousPrice)) {
             showPriceDroppedNotification(
                     currentPrice,
                     previousPrice,
                     productName,
                     storeName
             );
-        }
+//        }
     }
 
     private void showNotification(String title, String body) {

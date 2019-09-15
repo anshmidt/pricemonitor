@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 public class GraphPlotter {
 
     /**
-     * X axis - Date,
+     * X axis - Date
      * Y axis - Price
      */
 
     private DataManager dataManager;
     private Context context;
-//    private final String DATE_LABELS_FORMAT = "dd/MM";
-    private final String DATE_LABELS_FORMAT = "dd"; //temp
+    private final String DATE_LABELS_FORMAT = "dd/MM";
+//    private final String DATE_LABELS_FORMAT = "dd"; //temp
     private final int PADDING_TO_FIT_VERTICAL_AXIS_LABELS = 74;
     private final int GRAPH_LINE_THICKNESS = 8;
 

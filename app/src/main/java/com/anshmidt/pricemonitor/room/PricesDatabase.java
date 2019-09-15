@@ -1,9 +1,6 @@
 package com.anshmidt.pricemonitor.room;
 
-import android.arch.persistence.room.Database;
-import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
-import android.arch.persistence.room.TypeConverters;
+
 import android.content.Context;
 
 import com.anshmidt.pricemonitor.room.dao.ItemDao;
@@ -14,6 +11,10 @@ import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.room.entity.Price;
 import com.anshmidt.pricemonitor.room.entity.Product;
 import com.anshmidt.pricemonitor.room.entity.Store;
+
+import androidx.room.Database;
+import androidx.room.Room;
+import androidx.room.RoomDatabase;
 
 @Database(entities = {Item.class, Price.class, Product.class, Store.class}, version = 2)
 public abstract class PricesDatabase extends RoomDatabase {
