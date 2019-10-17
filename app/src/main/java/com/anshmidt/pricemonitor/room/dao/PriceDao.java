@@ -26,7 +26,7 @@ public interface PriceDao {
     @Query("SELECT MAX(date), * FROM prices WHERE item_id = :itemId")
     Price getLatestPriceForItem(int itemId);
 
-    @Query("SELECT * FROM prices WHERE item_id = :itemId ORDER BY item_id LIMIT 1 OFFSET 1")
+    @Query("SELECT * FROM prices WHERE item_id = :itemId ORDER BY date DESC LIMIT 1 OFFSET 1")
     Price getPreviousPriceForItem(int itemId);
 
     @Query("DELETE FROM prices WHERE item_id = :itemId")

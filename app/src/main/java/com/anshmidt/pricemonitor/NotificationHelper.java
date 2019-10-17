@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.anshmidt.pricemonitor.activities.MainActivity;
-import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 
 import javax.inject.Inject;
@@ -24,30 +23,29 @@ public class NotificationHelper {
         this.context = context;
     }
 
-    public void showPriceDroppedNotificationIfNeeded(int currentPrice, int previousPrice, String productName, String storeName) {
+    public void showPriceDroppedNotificationIfNeeded(int currentPrice, int previousPrice, String productName, String storeName, int itemId) {
         if (currentPrice == StoreScraper.PRICE_NOT_FOUND) {
             return;
         }
 
-        //TODO temp
-//        if (hasPriceDroppedEnoughToShowNotification(currentPrice, previousPrice)) {
+        if (hasPriceDroppedEnoughToShowNotification(currentPrice, previousPrice)) {
             showPriceDroppedNotification(
                     currentPrice,
                     previousPrice,
                     productName,
-                    storeName
+                    storeName,
+                    itemId
             );
-//        }
+        }
     }
 
-    private void showNotification(String title, String body) {
+    private void showNotification(String title, String body, int itemId) {
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
-        int notificationId = 1;
         String channelId = "channel-01";
         String channelName = context.getString(R.string.app_name) + "Channel";
-        int importance = NotificationManager.IMPORTANCE_HIGH;
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             NotificationChannel mChannel = new NotificationChannel(
@@ -71,13 +69,14 @@ public class NotificationHelper {
         );
         notificationBuilder.setContentIntent(resultPendingIntent);
 
+        int notificationId = itemId;
         notificationManager.notify(notificationId, notificationBuilder.build());
     }
 
-    private void showPriceDroppedNotification(int currentPrice, int previousPrice, String productName, String storeName) {
+    private void showPriceDroppedNotification(int currentPrice, int previousPrice, String productName, String storeName, int itemId) {
         String notificationTitle = productName + " (" + storeName + ")";
         String notificationText = context.getString(R.string.price_dropped_notification_text, currentPrice, previousPrice);
-        showNotification(notificationTitle, notificationText);
+        showNotification(notificationTitle, notificationText, itemId);
     }
 
 

@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
+import com.anshmidt.pricemonitor.dagger.AppModule;
+import com.anshmidt.pricemonitor.dagger.DaggerAppComponent;
 import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -31,11 +33,13 @@ public class ProductSettingsBottomSheetFragment extends BottomSheetDialogFragmen
     TextView deleteProductTextView;
     TextView addStoreTextView;
     @Inject PricesRepository pricesRepository;
-//    @Inject DatabaseHelper databaseHelper;
 
     @Override
     public void onAttach(Context context) {
-        PriceMonitorApplication.getComponent().inject(this);
+        DaggerAppComponent.builder()
+                .appModule(new AppModule(getContext()))
+                .build()
+                .inject(this);
         super.onAttach(context);
     }
 

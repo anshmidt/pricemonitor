@@ -20,6 +20,10 @@ import android.widget.TextView;
 import com.android.volley.VolleyError;
 import com.anshmidt.pricemonitor.PriceMonitorApplication;
 import com.anshmidt.pricemonitor.R;
+import com.anshmidt.pricemonitor.activities.MainActivity;
+import com.anshmidt.pricemonitor.dagger.AppComponent;
+import com.anshmidt.pricemonitor.dagger.AppModule;
+import com.anshmidt.pricemonitor.dagger.DaggerAppComponent;
 import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
@@ -52,7 +56,6 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
 
     @Inject PricesRepository pricesRepository;
 
-//    @Inject DatabaseHelper databaseHelper;
 
     boolean urlValidated = false;
     boolean productNameValidated = false;
@@ -139,7 +142,10 @@ public class AddProductDialogFragment extends DialogFragment implements StoreScr
 
     @Override
     public void onAttach(Context context) {
-        PriceMonitorApplication.getComponent().inject(this);
+        DaggerAppComponent.builder()
+                .appModule(new AppModule(getContext()))
+                .build()
+                .inject(this);
         super.onAttach(context);
     }
 

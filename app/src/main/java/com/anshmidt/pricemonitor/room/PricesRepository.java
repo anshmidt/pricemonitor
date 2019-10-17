@@ -1,6 +1,7 @@
 package com.anshmidt.pricemonitor.room;
 
 import android.database.sqlite.SQLiteException;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.anshmidt.pricemonitor.data.ItemData;
@@ -23,10 +24,14 @@ import com.anshmidt.pricemonitor.scrapers.YandexMarketMinScraper;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import io.reactivex.schedulers.Schedulers;
 
 
 /**
@@ -252,8 +257,24 @@ public class PricesRepository {
             Log.d(LOG_TAG, store.toString());
         }
         Log.d(LOG_TAG, LOG_DELIMITER);
+    }
 
+    public void printAllItemsAsyncronously() {
+        Log.d(LOG_TAG, "^^^^^^^^^^^^^ \n ITEMS async: ");
+        itemDao.getAllItemsObs()
+                .subscribeOn(Schedulers.io())
+                .subscribe(listOfItems -> printListOfItems(listOfItems))
+        ;
+    }
 
+    // for debugging
+    private void printListOfItems(List<Item> itemList) {
+        for (Item item : itemList) {
+            SystemClock.sleep(5000); //imitation of long running operation
+
+            Log.d(LOG_TAG, "Thread: " + Thread.currentThread());
+            Log.d(LOG_TAG, item.toString());
+        }
     }
 
     public List<ProductData> getAllProductData() {

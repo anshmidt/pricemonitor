@@ -30,9 +30,9 @@ import static androidx.room.ForeignKey.CASCADE;
 public class Price {
 
     public static final String TABLE_NAME = "prices";
+
     public static final String KEY_ID = "id";
     public static final String KEY_DATE = "date";
-
     public static final String KEY_ITEM_ID = "item_id";
     public static final String KEY_PRICE = "price";
 

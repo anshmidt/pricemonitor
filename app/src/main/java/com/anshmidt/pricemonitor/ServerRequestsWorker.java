@@ -3,6 +3,9 @@ package com.anshmidt.pricemonitor;
 import android.content.Context;
 import android.util.Log;
 
+import com.anshmidt.pricemonitor.activities.MainActivity;
+import com.anshmidt.pricemonitor.dagger.AppModule;
+import com.anshmidt.pricemonitor.dagger.DaggerAppComponent;
 import com.anshmidt.pricemonitor.room.PricesRepository;
 import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.room.entity.Price;
@@ -36,7 +39,11 @@ public class ServerRequestsWorker extends Worker {
 
     public ServerRequestsWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        PriceMonitorApplication.getComponent().inject(this);
+//        PriceMonitorApplication.getComponent().inject(this);
+        DaggerAppComponent.builder()
+                .appModule(new AppModule(context))
+                .build()
+                .inject(this);
         this.context = context;
     }
 
@@ -44,7 +51,6 @@ public class ServerRequestsWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-
 
         int itemId = getInputData().getInt(KEY_ITEM_ID, Item.ID_NOT_FOUND);
         String itemUrl = getInputData().getString(KEY_ITEM_URL);
@@ -76,7 +82,8 @@ public class ServerRequestsWorker extends Worker {
                     latestPrice,
                     previousPrice,
                     productName,
-                    storeName
+                    storeName,
+                    itemId
             );
 
             return Result.success();

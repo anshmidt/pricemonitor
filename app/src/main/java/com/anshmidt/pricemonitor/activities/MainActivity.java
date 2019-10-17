@@ -7,8 +7,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
+import com.anshmidt.pricemonitor.dagger.AppComponent;
+import com.anshmidt.pricemonitor.dagger.AppModule;
+import com.anshmidt.pricemonitor.dagger.DaggerAppComponent;
 import com.anshmidt.pricemonitor.data.DataManager;
 import com.anshmidt.pricemonitor.GraphPlotter;
 import com.anshmidt.pricemonitor.ProductsListAdapter;
@@ -26,6 +30,7 @@ import com.anshmidt.pricemonitor.room.entity.Product;
 import com.anshmidt.pricemonitor.room.entity.Store;
 import com.anshmidt.pricemonitor.scrapers.StoreScraper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 
 import java.util.Date;
 import java.util.List;
@@ -72,10 +77,17 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        PriceMonitorApplication.getComponent().inject(this);
+//        PriceMonitorApplication.getComponent().inject(this);
+        AppComponent appComponent = DaggerAppComponent.builder()
+                .appModule(new AppModule(MainActivity.this))
+                .build();
+        appComponent.inject(this);
 
         pricesRepository.addStoresIfNotPresent();
         pricesRepository.printDatabaseToLog();
+
+        //temp
+        pricesRepository.printAllItemsAsyncronously();
 
 
         RecyclerView recyclerView = findViewById(R.id.items_recyclerview);
@@ -94,22 +106,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
 
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy){
-                if (dy < 0 && !addItemButton.isShown()) {
-                    addItemButton.show();
-                }
-                else if (dy > 0 && addItemButton.isShown()) {
-                    addItemButton.hide();
-                }
-            }
-
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-            }
-        });
+        defineOnScrollRecyclerViewBehaviour(recyclerView, addItemButton);
     }
 
     @Override
@@ -294,6 +291,20 @@ public class MainActivity extends AppCompatActivity implements
         FragmentManager manager = getFragmentManager();
         AddProductDialogFragment addProductDialogFragment = new AddProductDialogFragment();
         addProductDialogFragment.show(manager, addProductDialogFragment.FRAGMENT_TAG);
+    }
+
+    private void defineOnScrollRecyclerViewBehaviour(RecyclerView recyclerView, FloatingActionButton floatingActionButton) {
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+                if (dy < 0 && !floatingActionButton.isShown()) {
+                    floatingActionButton.show();
+                }
+                else if (dy > 0 && floatingActionButton.isShown()) {
+                    floatingActionButton.hide();
+                }
+            }
+        });
     }
 
 

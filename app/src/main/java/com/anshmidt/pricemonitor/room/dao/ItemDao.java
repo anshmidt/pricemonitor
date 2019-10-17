@@ -6,12 +6,14 @@ import com.anshmidt.pricemonitor.room.entity.Item;
 import com.anshmidt.pricemonitor.room.entity.Product;
 
 import java.util.List;
+import java.util.Observable;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import io.reactivex.Flowable;
 
 @Dao
 public interface ItemDao {
@@ -44,6 +46,9 @@ public interface ItemDao {
 
     @Query("SELECT * FROM items")
     List<Item> getAllItems();
+
+    @Query("SELECT * FROM items")
+    Flowable<List<Item>> getAllItemsObs();
 
     @Query("SELECT * FROM items WHERE product_id = :productId")
     List<Item> getItemsByProductId(int productId);

@@ -17,8 +17,8 @@ public class DebugRandomScraper extends StoreScraper {
     public int extractPriceFromFullResponse(String fullResponse) {
 
         Random random = new Random();
-        return random.nextInt(90)*1000 + 2000;
-//        return 50000;
+//        return random.nextInt(90)*1000 + 2000;
+        return 50000;
 
 
     }
